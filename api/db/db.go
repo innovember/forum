@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	config "github.com/innovember/forum/api/config"
 	_ "github.com/mattn/go-sqlite3"
+	"io/ioutil"
 	"os"
+	"strings"
 )
 
 var dbConn *sql.DB
@@ -26,4 +28,17 @@ func GetDBInstance() (dbConn, err error) {
 	return dbConn, nil
 }
 
-func CheckDB(dbConn *sql.DB)
+func CheckDB(dbConn *sql.DB, path string) error {
+	schema, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	queries := strings.Split(string(schema), ";\n")
+	for _, query := range queries {
+		_, err = dbConn.Exec(string(query))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
