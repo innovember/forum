@@ -1,6 +1,6 @@
 # Database
-db.sqlite3
-forum.sqlite3
+api/db/forum.db
+
 
 # Binaries for programs and plugins
 *.exe

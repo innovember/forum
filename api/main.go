@@ -14,7 +14,7 @@ func Run() {
 	if err != nil {
 		log.Fatal("DB conn", err)
 	}
-	if err = db.CheckDB(dbConn, config.DBSchema); err != nil {
+	if err = db.CheckDB(dbConn, config.DBPath+"/"+config.DBSchema); err != nil {
 		log.Fatal("DB schema", err)
 	}
 	mux := http.NewServeMux()
