@@ -10,9 +10,10 @@ import (
 )
 
 var dbConn *sql.DB
+var err error
 
 // get instance of db connection, and check db integrity with schema
-func GetDBInstance() (dbConn *sql.DB, err error) {
+func GetDBInstance() (*sql.DB, error) {
 	if _, err = os.Stat(config.DBPath); os.IsNotExist(err) {
 		if err = os.Mkdir(config.DBPath, 0755); err != nil {
 			return nil, err

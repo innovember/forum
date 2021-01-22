@@ -1,5 +1,6 @@
 github.com/innovember/forum v0.0.0-20210119150956-f221de8e3380 h1:l4MeSWmejJ3pdwOZslOdLJudwWTWv53KW7vX7beZFXU=
 github.com/innovember/forum v0.0.0-20210119150956-f221de8e3380/go.mod h1:4mWr1jCZcRouiPbK9lh3LoEliMZpJoUwLvYPPwCCA/E=
+github.com/innovember/forum v0.0.0-20210121180934-90fd480c2787 h1:E1Ph42Ha1TyWlN66K4mdpvNsUHE/AyRk3xg49aggWfA=
 github.com/mattn/go-sqlite3 v1.14.4 h1:4rQjbDxdu9fSgI/r3KN72G3c2goxknAqHHgPWWs8UlI=
 github.com/mattn/go-sqlite3 v1.14.4/go.mod h1:WVKg1VTActs4Qso6iwGbiFih2UIHo0ENGwNd0Lj+XmI=
 github.com/mattn/go-sqlite3 v2.0.3+incompatible h1:gXHsfypPkaMZrKbD5209QV9jbUTJKjyR5WD3HYQSd+U=
