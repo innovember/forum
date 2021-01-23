@@ -19,7 +19,7 @@ func NewUserHandler(userUcase user.UserUsecase) *UserHandler {
 }
 
 func (uh *UserHandler) Configure(mux *http.ServeMux) {
-	mux.HandleFunc("/api/auth/signin", uh.CreateUserHandler)
+	mux.HandleFunc("/api/auth/signup", uh.CreateUserHandler)
 
 }
 

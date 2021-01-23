@@ -7,4 +7,5 @@ import (
 type UserRepository interface {
 	Create(user *models.User) (status int, err error)
 	CheckByUsernameOrEmail(user *models.User) (status int, err error)
+	GetAllUsers() (users []models.User, err error)
 }

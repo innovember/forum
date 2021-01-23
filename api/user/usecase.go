@@ -6,4 +6,5 @@ import (
 
 type UserUsecase interface {
 	Create(user *models.User) (status int, err error)
+	GetAllUsers() (users []models.User, status int, err error)
 }
