@@ -58,3 +58,23 @@ func (ur *UserDBRepository) CheckByUsernameOrEmail(user *models.User) (status in
 	}
 	return http.StatusOK, nil
 }
+
+func (ur *UserDBRepository) GetAllUsers() (users []models.User, err error) {
+	var rows *sql.Rows
+	if rows, err = ur.dbConn.Query(`SELECT * FROM users`); err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var u models.User
+		err = rows.Scan(&u.ID, &u.Username, &u.Password, &u.Email, &u.CreatedAt, &u.LastActive, &u.SessionID)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
