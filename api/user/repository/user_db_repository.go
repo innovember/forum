@@ -41,7 +41,7 @@ func (ur *UserDBRepository) Create(user *models.User) (status int, err error) {
 		return http.StatusInternalServerError, err
 	}
 	if rowsAffected > 0 {
-		return http.StatusOK, nil
+		return http.StatusCreated, nil
 	}
 	return http.StatusBadRequest, errors.New("cant create new user")
 }
