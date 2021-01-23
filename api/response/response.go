@@ -21,16 +21,17 @@ func JSON(w http.ResponseWriter, responseStatus string, httpStatus int, message,
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		output = []byte(`{"status":"error", "code":500,"message":"failed to marshal JSON in response.JSON()","data":null}`)
+		w.Write(output)
+		return
 	}
+	w.WriteHeader(httpStatus)
 	w.Write(output)
 }
 
 func Error(w http.ResponseWriter, httpStatus int, err error) {
-	w.WriteHeader(httpStatus)
 	JSON(w, "error", httpStatus, err.Error(), nil)
 }
 
-func Success(w http.ResponseWriter, message, data interface{}) {
-	w.WriteHeader(http.StatusOK)
-	JSON(w, "success", http.StatusOK, message, data)
+func Success(w http.ResponseWriter, message string, httpStatus int, data interface{}) {
+	JSON(w, "success", httpStatus, message, data)
 }

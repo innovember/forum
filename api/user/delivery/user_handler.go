@@ -20,6 +20,7 @@ func NewUserHandler(userUcase user.UserUsecase) *UserHandler {
 
 func (uh *UserHandler) Configure(mux *http.ServeMux) {
 	mux.HandleFunc("/api/auth/signup", uh.CreateUserHandler)
+	mux.HandleFunc("/api/users", uh.GetAllUsers)
 
 }
 
@@ -61,7 +62,20 @@ func (uh *UserHandler) CreateUserHandlerFunc(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	w.Header().Set("Set-Cookie", cookie)
-	w.WriteHeader(status)
-	response.Success(w, "new user has been created", user)
+	response.Success(w, "new user has been created", status, user)
 	return
+}
+
+func (uh *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		users, status, err := uh.userUcase.GetAllUsers()
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		response.Success(w, "all users", status, users)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
+		return
+	}
 }
