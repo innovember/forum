@@ -3,6 +3,7 @@ package usecases
 import (
 	"github.com/innovember/forum/api/models"
 	"github.com/innovember/forum/api/user"
+	"net/http"
 )
 
 type UserUsecase struct {
@@ -21,4 +22,11 @@ func (uu *UserUsecase) Create(user *models.User) (status int, err error) {
 		return status, err
 	}
 	return status, nil
+}
+
+func (uu *UserUsecase) GetAllUsers() (users []models.User, status int, err error) {
+	if users, err = uu.userRepo.GetAllUsers(); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return users, http.StatusOK, nil
 }
