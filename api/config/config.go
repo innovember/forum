@@ -13,4 +13,5 @@ const (
 	DBSchema          = "schema.sql"
 	SessionCookieName = "forumSecretKey"
 	SessionExpiration = 1 * time.Hour
+	ClientURL         = ""
 )
