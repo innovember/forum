@@ -21,7 +21,8 @@ func NewUserHandler(userUcase user.UserUsecase) *UserHandler {
 func (uh *UserHandler) Configure(mux *http.ServeMux) {
 	mux.HandleFunc("/api/auth/signup", uh.CreateUserHandler)
 	mux.HandleFunc("/api/users", uh.GetAllUsers)
-
+	mux.HandleFunc("/api/auth/signin", uh.SignIn)
+	mux.HandleFunc("/api/auth/signout", uh.SignOut)
 }
 
 func (uh *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -78,4 +79,72 @@ func (uh *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Only GET method allowed, return to main page", 405)
 		return
 	}
+}
+
+func (uh *UserHandler) SignIn(w http.ResponseWriter, r *http.Request) {
+	var (
+		input        models.InputUserSignIn
+		user         *models.User
+		userPassword string
+		cookie       string
+		newUUID      string
+		err          error
+		status       int
+	)
+	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+	if user, status, err = uh.userUcase.FindUserByUsername(input.Username); err != nil {
+		response.Error(w, status, err)
+		return
+	}
+	if status, err = uh.userUcase.CheckSessionByUsername(user.Username); err != nil {
+		response.Error(w, status, err)
+		return
+	}
+	if userPassword, status, err = uh.userUcase.GetPassword(user.Username); err != nil {
+		response.Error(w, status, err)
+		return
+	}
+	if err = security.VerifyPassword(userPassword, input.Password); err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+	cookie, newUUID = security.GenerateCookie(r.Cookie(config.SessionCookieName))
+	if err = uh.userUcase.UpdateSession(user.ID, newUUID); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	w.Header().Set("Set-Cookie", cookie)
+	response.Success(w, "user logged in", http.StatusOK, user)
+}
+
+func (uh *UserHandler) SignOut(w http.ResponseWriter, r *http.Request) {
+	var (
+		user   *models.User
+		err    error
+		status int
+		cookie *http.Cookie
+	)
+	if cookie, err = r.Cookie(config.SessionCookieName); err != nil {
+		response.Error(w, http.StatusUnauthorized, err)
+		return
+	}
+	if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+		response.Error(w, status, err)
+	}
+	if err = uh.userUcase.UpdateSession(user.ID, ""); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+	}
+	cookie = &http.Cookie{
+		Name:     config.SessionCookieName,
+		Value:    "",
+		MaxAge:   -1,
+		Path:     "/",
+		HttpOnly: true,
+	}
+	http.SetCookie(w, cookie)
+	response.Success(w, "user logged out", http.StatusOK, nil)
+	return
 }

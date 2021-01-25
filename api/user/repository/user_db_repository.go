@@ -135,12 +135,12 @@ func (ur *UserDBRepository) CheckSessionByUsername(username string) (status int,
 	if err = ur.dbConn.QueryRow(`
 	SELECT session_id FROM users WHERE username = ?`, username).Scan(&user.SessionID); err != nil {
 		if err == sql.ErrNoRows {
-			return http.StatusNotFound, nil
+			return http.StatusNotFound, errors.New("user not found")
 		}
 		return http.StatusInternalServerError, err
 	}
 	if user.SessionID == "" {
 		return http.StatusOK, nil
 	}
-	return http.StatusForbidden, nil
+	return http.StatusForbidden, errors.New("user already authorized")
 }
