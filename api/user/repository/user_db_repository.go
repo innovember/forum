@@ -78,3 +78,69 @@ func (ur *UserDBRepository) GetAllUsers() (users []models.User, err error) {
 	}
 	return users, nil
 }
+
+func (ur *UserDBRepository) GetPassword(username string) (password string, status int, err error) {
+	if err = ur.dbConn.QueryRow(`
+	SELECT password FROM users WHERE username = ?`, username).Scan(&password); err != nil {
+		if err == sql.ErrNoRows {
+			return "", http.StatusNotFound, errors.New("password not found for username:" + username)
+		}
+		return "", http.StatusInternalServerError, err
+	}
+	return password, http.StatusOK, nil
+}
+
+func (ur *UserDBRepository) FindUserByUsername(username string) (user *models.User, status int, err error) {
+	if err = ur.dbConn.QueryRow(`
+	SELECT id,username,email FROM users WHERE username = ?
+	`, username).Scan(&user.ID, &user.Username, &user.Email); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusNotFound, errors.New("user not found for username:" + username)
+		}
+		return nil, http.StatusInternalServerError, err
+	}
+	return user, http.StatusOK, nil
+}
+
+func (ur *UserDBRepository) UpdateSession(userID int64, sessionValue string) (err error) {
+	var (
+		result       sql.Result
+		rowsAffected int64
+	)
+	if result, err = ur.dbConn.Exec(`
+	UPDATE users SET session_id = ? WHERE id = userID`, sessionValue, userID); err != nil {
+		return err
+	}
+	if rowsAffected, err = result.RowsAffected(); err != nil {
+		return err
+	}
+	if rowsAffected > 0 {
+		return nil
+	}
+	return errors.New("cant update session")
+}
+func (ur *UserDBRepository) ValidateSession(sessionValue string) (user *models.User, status int, err error) {
+	if err = ur.dbConn.QueryRow(`
+	SELECT id,username,email FROM users WHERE session_id = ?`, sessionValue).Scan(&user.ID, &user.Username, &user.Email); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusUnauthorized, errors.New("user not authorized")
+		}
+		return nil, http.StatusInternalServerError, err
+	}
+	return user, http.StatusOK, nil
+}
+
+func (ur *UserDBRepository) CheckSessionByUsername(username string) (status int, err error) {
+	var user *models.User
+	if err = ur.dbConn.QueryRow(`
+	SELECT session_id FROM users WHERE username = ?`, username).Scan(&user.SessionID); err != nil {
+		if err == sql.ErrNoRows {
+			return http.StatusNotFound, nil
+		}
+		return http.StatusInternalServerError, err
+	}
+	if user.SessionID == "" {
+		return http.StatusOK, nil
+	}
+	return http.StatusForbidden, nil
+}

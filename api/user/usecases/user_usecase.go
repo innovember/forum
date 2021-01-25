@@ -30,3 +30,37 @@ func (uu *UserUsecase) GetAllUsers() (users []models.User, status int, err error
 	}
 	return users, http.StatusOK, nil
 }
+
+func (uu *UserUsecase) GetPassword(username string) (password string, status int, err error) {
+	if password, status, err = uu.userRepo.GetPassword(username); err != nil {
+		return "", status, err
+	}
+	return password, status, nil
+}
+
+func (uu *UserUsecase) FindUserByUsername(username string) (user *models.User, status int, err error) {
+	if user, status, err = uu.userRepo.FindUserByUsername(username); err != nil {
+		return nil, status, err
+	}
+	return user, status, nil
+}
+
+func (uu *UserUsecase) UpdateSession(userID int64, sessionValue string) (err error) {
+	if err = uu.userRepo.UpdateSession(userID, sessionValue); err != nil {
+		return err
+	}
+	return nil
+}
+func (uu *UserUsecase) ValidateSession(sessionValue string) (user *models.User, status int, err error) {
+	if user, status, err = uu.userRepo.ValidateSession(sessionValue); err != nil {
+		return nil, status, err
+	}
+	return user, status, nil
+}
+
+func (uu *UserUsecase) CheckSessionByUsername(username string) (status int, err error) {
+	if status, err = uu.userRepo.CheckSessionByUsername(username); err != nil {
+		return status, err
+	}
+	return status, nil
+}
