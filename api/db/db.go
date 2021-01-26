@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-var dbConn *sql.DB
+var DBConn *sql.DB
 var err error
 
 // get instance of db connection, and check db integrity with schema
@@ -19,24 +19,24 @@ func GetDBInstance() (*sql.DB, error) {
 			return nil, err
 		}
 	}
-	if dbConn, err = sql.Open(config.DBDriver, config.DBPath+"/"+config.DBFileName); err != nil {
+	if DBConn, err = sql.Open(config.DBDriver, config.DBPath+"/"+config.DBFileName); err != nil {
 		return nil, err
 	}
-	dbConn.SetMaxIdleConns(100)
-	if err = dbConn.Ping(); err != nil {
+	DBConn.SetMaxIdleConns(100)
+	if err = DBConn.Ping(); err != nil {
 		return nil, err
 	}
-	return dbConn, nil
+	return DBConn, nil
 }
 
-func CheckDB(dbConn *sql.DB, path string) error {
+func CheckDB(DBConn *sql.DB, path string) error {
 	schema, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}
 	queries := strings.Split(string(schema), ";\n")
 	for _, query := range queries {
-		_, err = dbConn.Exec(string(query))
+		_, err = DBConn.Exec(string(query))
 		if err != nil {
 			return err
 		}
