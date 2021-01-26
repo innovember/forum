@@ -3,6 +3,7 @@ package delivery
 import (
 	"encoding/json"
 	"github.com/innovember/forum/api/config"
+	"github.com/innovember/forum/api/middleware"
 	"github.com/innovember/forum/api/models"
 	"github.com/innovember/forum/api/response"
 	"github.com/innovember/forum/api/security"
@@ -18,11 +19,11 @@ func NewUserHandler(userUcase user.UserUsecase) *UserHandler {
 	return &UserHandler{userUcase: userUcase}
 }
 
-func (uh *UserHandler) Configure(mux *http.ServeMux) {
-	mux.HandleFunc("/api/auth/signup", uh.CreateUserHandler)
-	mux.HandleFunc("/api/users", uh.GetAllUsers)
-	mux.HandleFunc("/api/auth/signin", uh.SignIn)
-	mux.HandleFunc("/api/auth/signout", uh.SignOut)
+func (uh *UserHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareManager) {
+	mux.HandleFunc("/api/auth/signup", mw.SetHeaders(uh.CreateUserHandler))
+	mux.HandleFunc("/api/users", mw.SetHeaders(uh.GetAllUsers))
+	mux.HandleFunc("/api/auth/signin", mw.SetHeaders(uh.SignIn))
+	mux.HandleFunc("/api/auth/signout", mw.SetHeaders(mw.AuthorizedOnly(uh.SignOut)))
 }
 
 func (uh *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {

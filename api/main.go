@@ -3,6 +3,7 @@ package main
 import (
 	config "github.com/innovember/forum/api/config"
 	db "github.com/innovember/forum/api/db"
+	"github.com/innovember/forum/api/middleware"
 
 	userHandler "github.com/innovember/forum/api/user/delivery"
 	userRepo "github.com/innovember/forum/api/user/repository"
@@ -29,10 +30,10 @@ func Run() {
 
 	//Middleware
 	mux := http.NewServeMux()
-
+	mw := middleware.NewMiddlewareManager()
 	//Delivery
 	userHandler := userHandler.NewUserHandler(userUcase)
-	userHandler.Configure(mux)
+	userHandler.Configure(mux, mw)
 	port := config.APIPortDev
 	if port == "" {
 		port = getPort()
