@@ -61,12 +61,12 @@ func (ur *UserDBRepository) CheckByUsernameOrEmail(user *models.User) (status in
 
 func (ur *UserDBRepository) GetAllUsers() (users []models.User, err error) {
 	var rows *sql.Rows
-	if rows, err = ur.dbConn.Query(`SELECT * FROM users`); err != nil {
+	if rows, err = ur.dbConn.Query(`SELECT id, username,email,created_at, last_active FROM users`); err != nil {
 		return nil, err
 	}
 	for rows.Next() {
 		var u models.User
-		err = rows.Scan(&u.ID, &u.Username, &u.Password, &u.Email, &u.CreatedAt, &u.LastActive, &u.SessionID)
+		err = rows.Scan(&u.ID, &u.Username, &u.Email, &u.CreatedAt, &u.LastActive)
 		if err != nil {
 			return nil, err
 		}
@@ -121,7 +121,7 @@ func (ur *UserDBRepository) UpdateSession(userID int64, sessionValue string) (er
 }
 func (ur *UserDBRepository) ValidateSession(sessionValue string) (user *models.User, status int, err error) {
 	if err = ur.dbConn.QueryRow(`
-	SELECT id,username,email FROM users WHERE session_id = ?`, sessionValue).Scan(&user.ID, &user.Username, &user.Email); err != nil {
+	SELECT id,username,email,created_at,last_active FROM users WHERE session_id = ?`, sessionValue).Scan(&user.ID, &user.Username, &user.Email); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusUnauthorized, errors.New("user not authorized")
 		}
