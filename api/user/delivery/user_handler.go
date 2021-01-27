@@ -24,6 +24,7 @@ func (uh *UserHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/users", mw.SetHeaders(uh.GetAllUsers))
 	mux.HandleFunc("/api/auth/signin", mw.SetHeaders(uh.SignIn))
 	mux.HandleFunc("/api/auth/signout", mw.SetHeaders(mw.AuthorizedOnly(uh.SignOut)))
+	mux.HandleFunc("/api/auth/me", mw.SetHeaders(mw.AuthorizedOnly(uh.Me)))
 }
 
 func (uh *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -83,6 +84,15 @@ func (uh *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uh *UserHandler) SignIn(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		uh.SignInFunc(w, r)
+	default:
+		http.Error(w, "Only POST method allowed, return to main page", 405)
+	}
+}
+
+func (uh *UserHandler) SignInFunc(w http.ResponseWriter, r *http.Request) {
 	var (
 		input        models.InputUserSignIn
 		user         *models.User
@@ -122,6 +132,14 @@ func (uh *UserHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uh *UserHandler) SignOut(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		uh.SignOutFunc(w, r)
+	default:
+		http.Error(w, "Only GET method allowed, return to main page", 405)
+	}
+}
+func (uh *UserHandler) SignOutFunc(w http.ResponseWriter, r *http.Request) {
 	var (
 		user   *models.User
 		err    error
@@ -148,4 +166,28 @@ func (uh *UserHandler) SignOut(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookie)
 	response.Success(w, "user logged out", http.StatusOK, nil)
 	return
+}
+
+func (uh *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		uh.MeFunc(w, r)
+	default:
+		http.Error(w, "Only GET method allowed, return to main page", 405)
+	}
+}
+
+func (uh *UserHandler) MeFunc(w http.ResponseWriter, r *http.Request) {
+	var (
+		user   *models.User
+		status int
+		err    error
+		cookie *http.Cookie
+	)
+	cookie, _ = r.Cookie(config.SessionCookieName)
+	if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+		response.Error(w, status, err)
+		return
+	}
+	response.Success(w, "get user info successfully", status, user)
 }
