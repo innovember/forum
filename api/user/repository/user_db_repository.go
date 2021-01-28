@@ -90,7 +90,11 @@ func (ur *UserDBRepository) GetPassword(username string) (password string, statu
 	return password, http.StatusOK, nil
 }
 
-func (ur *UserDBRepository) FindUserByUsername(username string) (user *models.User, status int, err error) {
+func (ur *UserDBRepository) FindUserByUsername(username string) (*models.User, int, error) {
+	var (
+		user models.User
+		err  error
+	)
 	if err = ur.dbConn.QueryRow(`
 	SELECT id,username,email FROM users WHERE username = ?
 	`, username).Scan(&user.ID, &user.Username, &user.Email); err != nil {
@@ -99,7 +103,7 @@ func (ur *UserDBRepository) FindUserByUsername(username string) (user *models.Us
 		}
 		return nil, http.StatusInternalServerError, err
 	}
-	return user, http.StatusOK, nil
+	return &user, http.StatusOK, nil
 }
 
 func (ur *UserDBRepository) UpdateSession(userID int64, sessionValue string) (err error) {
@@ -108,7 +112,7 @@ func (ur *UserDBRepository) UpdateSession(userID int64, sessionValue string) (er
 		rowsAffected int64
 	)
 	if result, err = ur.dbConn.Exec(`
-	UPDATE users SET session_id = ? WHERE id = userID`, sessionValue, userID); err != nil {
+	UPDATE users SET session_id = ? WHERE id = ?`, sessionValue, userID); err != nil {
 		return err
 	}
 	if rowsAffected, err = result.RowsAffected(); err != nil {
@@ -131,7 +135,7 @@ func (ur *UserDBRepository) ValidateSession(sessionValue string) (user *models.U
 }
 
 func (ur *UserDBRepository) CheckSessionByUsername(username string) (status int, err error) {
-	var user *models.User
+	var user models.User
 	if err = ur.dbConn.QueryRow(`
 	SELECT session_id FROM users WHERE username = ?`, username).Scan(&user.SessionID); err != nil {
 		if err == sql.ErrNoRows {
