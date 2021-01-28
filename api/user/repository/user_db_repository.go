@@ -129,7 +129,7 @@ func (ur *UserDBRepository) ValidateSession(sessionValue string) (*models.User, 
 		err  error
 	)
 	if err = ur.dbConn.QueryRow(`
-	SELECT id,username,email,created_at,last_active FROM users WHERE session_id = ?`, sessionValue).Scan(&user.ID, &user.Username, &user.Email); err != nil {
+	SELECT id,username,email,created_at,last_active FROM users WHERE session_id = ?`, sessionValue).Scan(&user.ID, &user.Username, &user.Email, &user.CreatedAt, &user.LastActive); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusUnauthorized, errors.New("user not authorized")
 		}
