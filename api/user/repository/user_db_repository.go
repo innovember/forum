@@ -123,7 +123,11 @@ func (ur *UserDBRepository) UpdateSession(userID int64, sessionValue string) (er
 	}
 	return errors.New("cant update session")
 }
-func (ur *UserDBRepository) ValidateSession(sessionValue string) (user *models.User, status int, err error) {
+func (ur *UserDBRepository) ValidateSession(sessionValue string) (*models.User, int, error) {
+	var (
+		user models.User
+		err  error
+	)
 	if err = ur.dbConn.QueryRow(`
 	SELECT id,username,email,created_at,last_active FROM users WHERE session_id = ?`, sessionValue).Scan(&user.ID, &user.Username, &user.Email); err != nil {
 		if err == sql.ErrNoRows {
@@ -131,7 +135,7 @@ func (ur *UserDBRepository) ValidateSession(sessionValue string) (user *models.U
 		}
 		return nil, http.StatusInternalServerError, err
 	}
-	return user, http.StatusOK, nil
+	return &user, http.StatusOK, nil
 }
 
 func (ur *UserDBRepository) CheckSessionByUsername(username string) (status int, err error) {
