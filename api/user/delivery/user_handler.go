@@ -40,8 +40,6 @@ func (uh *UserHandler) CreateUserHandlerFunc(w http.ResponseWriter, r *http.Requ
 	var (
 		input          models.InputUserSignUp
 		hashedPassword string
-		cookie         string
-		newSessionID   string
 		status         int
 		err            error
 	)
@@ -53,18 +51,16 @@ func (uh *UserHandler) CreateUserHandlerFunc(w http.ResponseWriter, r *http.Requ
 		response.Error(w, http.StatusBadRequest, err)
 		return
 	}
-	cookie, newSessionID = security.GenerateCookie(r.Cookie(config.SessionCookieName))
 	user := models.User{
 		Username:  input.Username,
 		Password:  hashedPassword,
 		Email:     input.Email,
-		SessionID: newSessionID,
+		SessionID: "",
 	}
 	if status, err = uh.userUcase.Create(&user); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
 		return
 	}
-	w.Header().Set("Set-Cookie", cookie)
 	response.Success(w, "new user has been created", status, user)
 	return
 }
