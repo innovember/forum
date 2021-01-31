@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY, name TEXT);
 
 CREATE TABLE IF NOT EXISTS posts (
 	id INTEGER PRIMARY KEY,
-	author_id INTEGER title TEXT,
+	author_id INTEGER,
+	title TEXT,
 	content TEXT,
 	created_at INTEGER,
 	FOREIGN KEY (author_id) REFERENCES users (id) ON
