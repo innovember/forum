@@ -8,6 +8,11 @@ import (
 	userHandler "github.com/innovember/forum/api/user/delivery"
 	userRepo "github.com/innovember/forum/api/user/repository"
 	userUsecase "github.com/innovember/forum/api/user/usecases"
+
+	postHandler "github.com/innovember/forum/api/post/delivery"
+	postRepo "github.com/innovember/forum/api/post/repository"
+	postUsecase "github.com/innovember/forum/api/post/usecases"
+
 	//_ "github.com/mattn/go-sqlite3"
 	"log"
 	"net/http"
@@ -24,9 +29,10 @@ func Run() {
 	}
 	//Repository
 	userRepository := userRepo.NewUserDBRepository(dbConn)
-
+	postRepository := postRepo.NewPostDBRepository(dbConn)
 	//Usecases
 	userUcase := userUsecase.NewUserUsecase(userRepository)
+	postUcase := postUsecase.NewPostUsecase(postRepository)
 
 	//Middleware
 	mux := http.NewServeMux()
@@ -34,6 +40,9 @@ func Run() {
 	//Delivery
 	userHandler := userHandler.NewUserHandler(userUcase)
 	userHandler.Configure(mux, mw)
+
+	postHandler := postHandler.NewPostHandler(postUcase, userUcase)
+	postHandler.Configure(mux, mw)
 	port := config.APIPortDev
 	if port == "" {
 		port = getPort()
