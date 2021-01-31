@@ -19,3 +19,10 @@ func (pu *PostUsecase) Create(post *models.Post, categories []string) (newPost *
 	}
 	return newPost, status, err
 }
+
+func (pu *PostUsecase) GetAllPosts(userID int64) (posts []models.Post, status int, err error) {
+	if posts, status, err = pu.postRepo.GetAllPosts(userID); err != nil {
+		return nil, status, err
+	}
+	return posts, status, nil
+}
