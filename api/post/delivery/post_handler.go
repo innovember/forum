@@ -25,6 +25,8 @@ func NewPostHandler(postUcase post.PostUsecase, userUcase user.UserUsecase) *Pos
 
 func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareManager) {
 	mux.HandleFunc("/api/post/create", mw.SetHeaders(mw.AuthorizedOnly(ph.CreatePostHandler)))
+	mux.HandleFunc("/api/posts", mw.SetHeaders(ph.GetPostsHandler))
+	// mux.HandleFunc("/api/post/", mw.SetHeaders(ph.GetPostHandler))
 }
 
 func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
@@ -69,4 +71,33 @@ func (ph *PostHandler) CreatePostHandlerFunc(w http.ResponseWriter, r *http.Requ
 	}
 	response.Success(w, "new post created", status, newPost)
 	return
+}
+
+func (ph *PostHandler) GetPostsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+			posts  []models.Post
+		)
+		cookie, err = r.Cookie(config.SessionCookieName)
+		if err != nil {
+			user = &models.User{ID: -1}
+		} else {
+			if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
+				user = &models.User{ID: -1}
+			}
+		}
+		posts, status, err = ph.postUcase.GetAllPosts(user.ID)
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		response.Success(w, "all posts", status, posts)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
+		return
+	}
 }
