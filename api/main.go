@@ -30,9 +30,11 @@ func Run() {
 	//Repository
 	userRepository := userRepo.NewUserDBRepository(dbConn)
 	postRepository := postRepo.NewPostDBRepository(dbConn)
+	postRateRepository := postRepo.NewRateDBRepository(dbConn)
 	//Usecases
 	userUcase := userUsecase.NewUserUsecase(userRepository)
 	postUcase := postUsecase.NewPostUsecase(postRepository)
+	postRateUcase := postUsecase.NewRateUsecase(postRateRepository)
 
 	//Middleware
 	mux := http.NewServeMux()
@@ -41,7 +43,7 @@ func Run() {
 	userHandler := userHandler.NewUserHandler(userUcase)
 	userHandler.Configure(mux, mw)
 
-	postHandler := postHandler.NewPostHandler(postUcase, userUcase)
+	postHandler := postHandler.NewPostHandler(postUcase, userUcase, postRateUcase)
 	postHandler.Configure(mux, mw)
 	port := config.APIPortDev
 	if port == "" {
