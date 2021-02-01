@@ -8,3 +8,12 @@ type PostUsecase interface {
 	Create(post *models.Post, categories []string) (newPost *models.Post, status int, err error)
 	GetAllPosts(userID int64) (posts []models.Post, status int, err error)
 }
+
+type CategoryUsecase interface {
+	GetAllCategories() (categories []models.Category, status int, err error)
+}
+
+type RateUsecase interface {
+	RatePost(postID int64, userID int64, vote int) error
+	GetRating(postID int64, userID int64) (rating int, userRating int, err error)
+}

@@ -110,9 +110,10 @@ func (ur *UserDBRepository) UpdateSession(userID int64, sessionValue string) (er
 	var (
 		result       sql.Result
 		rowsAffected int64
+		now          int64 = time.Now().Unix()
 	)
 	if result, err = ur.dbConn.Exec(`
-	UPDATE users SET session_id = ? WHERE id = ?`, sessionValue, userID); err != nil {
+	UPDATE users SET session_id = ?,last_active = ? WHERE id = ?`, sessionValue, now, userID); err != nil {
 		return err
 	}
 	if rowsAffected, err = result.RowsAffected(); err != nil {
@@ -123,6 +124,7 @@ func (ur *UserDBRepository) UpdateSession(userID int64, sessionValue string) (er
 	}
 	return errors.New("cant update session")
 }
+
 func (ur *UserDBRepository) ValidateSession(sessionValue string) (*models.User, int, error) {
 	var (
 		user models.User
