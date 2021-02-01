@@ -31,10 +31,12 @@ func Run() {
 	userRepository := userRepo.NewUserDBRepository(dbConn)
 	postRepository := postRepo.NewPostDBRepository(dbConn)
 	postRateRepository := postRepo.NewRateDBRepository(dbConn)
+	categoryRepository := postRepo.NewCategoryDBRepository(dbConn)
 	//Usecases
 	userUcase := userUsecase.NewUserUsecase(userRepository)
 	postUcase := postUsecase.NewPostUsecase(postRepository)
 	postRateUcase := postUsecase.NewRateUsecase(postRateRepository)
+	categoryUcase := postUcase.NewCategoryUsecase(categoryRepository)
 
 	//Middleware
 	mux := http.NewServeMux()

@@ -14,16 +14,19 @@ import (
 )
 
 type PostHandler struct {
-	postUcase post.PostUsecase
-	userUcase user.UserUsecase
-	rateUcase post.RateUsecase
+	postUcase     post.PostUsecase
+	userUcase     user.UserUsecase
+	rateUcase     post.RateUsecase
+	categoryUcase post.CategoryUsecase
 }
 
-func NewPostHandler(postUcase post.PostUsecase, userUcase user.UserUsecase, rateUcase post.RateUsecase) *PostHandler {
+func NewPostHandler(postUcase post.PostUsecase, userUcase user.UserUsecase,
+	rateUcase post.RateUsecase, categoryUcase post.CategoryUsecase) *PostHandler {
 	return &PostHandler{
-		postUcase: postUcase,
-		userUcase: userUcase,
-		rateUcase: rateUcase}
+		postUcase:     postUcase,
+		userUcase:     userUcase,
+		rateUcase:     rateUcase,
+		categoryUcase: categoryUcase}
 }
 
 func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareManager) {
@@ -31,7 +34,7 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/posts", mw.SetHeaders(ph.GetPostsHandler))
 	// mux.HandleFunc("/api/post", mw.SetHeaders(ph.GetPostHandler))
 	mux.HandleFunc("/api/post/rate", mw.SetHeaders(mw.AuthorizedOnly(ph.RatePostHandler)))
-	// mux.HandleFunc("/api/categories", mw.SetHeaders(ph.GetAllCategoriesHandler))
+	mux.HandleFunc("/api/categories", mw.SetHeaders(ph.GetAllCategoriesHandler))
 }
 
 func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
@@ -147,4 +150,23 @@ func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Reques
 	}
 	response.Success(w, "post has been rated", http.StatusOK, rating)
 	return
+}
+
+func (ph *PostHandler) GetAllCategoriesHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		var (
+			status     int
+			err        error
+			categories []models.Category
+		)
+		categories, status, err = ph.categoryUcase.GetAllCategories()
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		response.Success(w, "all categories", status, categories)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
+		return
+	}
 }
