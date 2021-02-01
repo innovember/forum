@@ -2,6 +2,7 @@ package delivery
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/innovember/forum/api/config"
 	"github.com/innovember/forum/api/middleware"
 	"github.com/innovember/forum/api/models"
@@ -15,18 +16,22 @@ import (
 type PostHandler struct {
 	postUcase post.PostUsecase
 	userUcase user.UserUsecase
+	rateUcase post.RateUsecase
 }
 
-func NewPostHandler(postUcase post.PostUsecase, userUcase user.UserUsecase) *PostHandler {
+func NewPostHandler(postUcase post.PostUsecase, userUcase user.UserUsecase, rateUcase post.RateUsecase) *PostHandler {
 	return &PostHandler{
 		postUcase: postUcase,
-		userUcase: userUcase}
+		userUcase: userUcase,
+		rateUcase: rateUcase}
 }
 
 func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareManager) {
 	mux.HandleFunc("/api/post/create", mw.SetHeaders(mw.AuthorizedOnly(ph.CreatePostHandler)))
 	mux.HandleFunc("/api/posts", mw.SetHeaders(ph.GetPostsHandler))
-	// mux.HandleFunc("/api/post/", mw.SetHeaders(ph.GetPostHandler))
+	// mux.HandleFunc("/api/post", mw.SetHeaders(ph.GetPostHandler))
+	mux.HandleFunc("/api/post/rate", mw.SetHeaders(mw.AuthorizedOnly(ph.RatePostHandler)))
+	// mux.HandleFunc("/api/categories", mw.SetHeaders(ph.GetAllCategoriesHandler))
 }
 
 func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
@@ -100,4 +105,46 @@ func (ph *PostHandler) GetPostsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Only GET method allowed, return to main page", 405)
 		return
 	}
+}
+
+func (ph *PostHandler) RatePostHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		ph.RatePostHandlerFunc(w, r)
+	default:
+		http.Error(w, "Only POST method allowed, return to main page", 405)
+	}
+}
+
+func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Request) {
+	var (
+		input  models.InputRate
+		rating models.Rating
+		err    error
+		status int
+		user   *models.User
+		cookie *http.Cookie
+	)
+	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+	}
+	if input.Reaction != -1 || input.Reaction != 1 {
+		response.Error(w, http.StatusBadRequest, errors.New("only 1 or -1 values accepted"))
+		return
+	}
+	cookie, _ = r.Cookie(config.SessionCookieName)
+	if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
+		response.Error(w, status, err)
+		return
+	}
+	if err = ph.rateUcase.RatePost(input.ID, user.ID, input.Reaction); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	if rating.Rating, rating.UserRating, err = ph.rateUcase.GetRating(input.ID, user.ID); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	response.Success(w, "post has been rated", http.StatusOK, rating)
+	return
 }
