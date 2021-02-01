@@ -2,7 +2,9 @@ package repository
 
 import (
 	"database/sql"
+	"github.com/innovember/forum/api/models"
 	"github.com/innovember/forum/api/post"
+	"net/http"
 )
 
 type CategoryDBRepository struct {
@@ -70,4 +72,25 @@ func (cr *CategoryDBRepository) GetCategoryIDByName(name string) (id int64, err 
 		return 0, err
 	}
 	return id, nil
+}
+
+func (cr *CategoryDBRepository) GetAllCategories() (categories []models.Category, status int, err error) {
+	var rows *sql.Rows
+	if rows, err = cr.dbConn.Query(`SELECT * FROM categories`); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var c models.Category
+		err = rows.Scan(&c.ID, &c.Name)
+		if err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+		categories = append(categories, c)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return categories, http.StatusOK, nil
 }

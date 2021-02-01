@@ -17,6 +17,7 @@ type PostRepository interface {
 
 type CategoryRepository interface {
 	Create(postID int64, categories []string) (err error)
+	GetAllCategories() (categories []models.Category, status int, err error)
 }
 
 type RateRepository interface {

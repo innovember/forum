@@ -64,6 +64,7 @@ func (ur *UserDBRepository) GetAllUsers() (users []models.User, err error) {
 	if rows, err = ur.dbConn.Query(`SELECT id, username,email,created_at, last_active FROM users`); err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var u models.User
 		err = rows.Scan(&u.ID, &u.Username, &u.Email, &u.CreatedAt, &u.LastActive)

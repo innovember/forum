@@ -79,6 +79,10 @@ func (pr *PostDBRepository) GetAllPosts(userID int64) (posts []models.Post, stat
 		}
 		posts = append(posts, p)
 	}
+	err = rows.Err()
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
 	return posts, http.StatusOK, nil
 }
 
@@ -116,6 +120,10 @@ func (pr *PostDBRepository) GetCategories(post *models.Post) (status int, err er
 		var c models.Category
 		rows.Scan(&c.ID, &c.Name)
 		categories = append(categories, c)
+	}
+	err = rows.Err()
+	if err != nil {
+		return http.StatusInternalServerError, err
 	}
 	post.Categories = categories
 	return http.StatusOK, nil
