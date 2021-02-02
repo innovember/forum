@@ -128,3 +128,24 @@ func (pr *PostDBRepository) GetCategories(post *models.Post) (status int, err er
 	post.Categories = categories
 	return http.StatusOK, nil
 }
+func (pr *PostDBRepository) GetPostByID(userID int64, postID int64) (post *models.Post, status int, err error) {
+	var (
+		p        models.Post
+		rateRepo = NewRateDBRepository(pr.dbConn)
+	)
+	if err = pr.dbConn.QueryRow(`
+	SELECT * FROM posts WHERE id = ?`, postID,
+	).Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content, &p.CreatedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusUnauthorized, errors.New("post not found")
+		}
+		return nil, http.StatusInternalServerError, err
+	}
+	if status, err = pr.GetAuthor(&p); err != nil {
+		return nil, status, err
+	}
+	if p.PostRating, p.UserRating, err = rateRepo.GetPostRating(postID, userID); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return &p, http.StatusOK, nil
+}

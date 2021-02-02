@@ -26,3 +26,10 @@ func (pu *PostUsecase) GetAllPosts(userID int64) (posts []models.Post, status in
 	}
 	return posts, status, nil
 }
+
+func (pu *PostUsecase) GetPostByID(userID int64, postID int64) (post *models.Post, status int, err error) {
+	if post, status, err = pu.postRepo.GetPostByID(userID, postID); err != nil {
+		return nil, status, err
+	}
+	return post, status, nil
+}
