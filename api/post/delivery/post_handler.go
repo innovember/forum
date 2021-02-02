@@ -10,6 +10,7 @@ import (
 	"github.com/innovember/forum/api/response"
 	"github.com/innovember/forum/api/user"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -32,9 +33,10 @@ func NewPostHandler(postUcase post.PostUsecase, userUcase user.UserUsecase,
 func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareManager) {
 	mux.HandleFunc("/api/post/create", mw.SetHeaders(mw.AuthorizedOnly(ph.CreatePostHandler)))
 	mux.HandleFunc("/api/posts", mw.SetHeaders(ph.GetPostsHandler))
-	// mux.HandleFunc("/api/post", mw.SetHeaders(ph.GetPostHandler))
+	mux.HandleFunc("/api/post/", mw.SetHeaders(ph.GetPostHandler))
 	mux.HandleFunc("/api/post/rate", mw.SetHeaders(mw.AuthorizedOnly(ph.RatePostHandler)))
 	mux.HandleFunc("/api/categories", mw.SetHeaders(ph.GetAllCategoriesHandler))
+	// mux.HandleFunc("/api/post/filter", mw.SetHeaders(ph.FilterPosts))
 }
 
 func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
@@ -165,6 +167,41 @@ func (ph *PostHandler) GetAllCategoriesHandler(w http.ResponseWriter, r *http.Re
 			return
 		}
 		response.Success(w, "all categories", status, categories)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (ph *PostHandler) GetPostHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+			post   *models.Post
+			postID int
+		)
+		_id := r.URL.Path[len("/api/post/"):]
+		if postID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("post id doesn't exist"))
+			return
+		}
+		cookie, err = r.Cookie(config.SessionCookieName)
+		if err != nil {
+			user = &models.User{ID: -1}
+		} else {
+			if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
+				user = &models.User{ID: -1}
+			}
+		}
+		post, status, err = ph.postUcase.GetPostByID(user.ID, int64(postID))
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		response.Success(w, "post with id", status, post)
 	} else {
 		http.Error(w, "Only GET method allowed, return to main page", 405)
 		return

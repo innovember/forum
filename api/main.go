@@ -36,7 +36,7 @@ func Run() {
 	userUcase := userUsecase.NewUserUsecase(userRepository)
 	postUcase := postUsecase.NewPostUsecase(postRepository)
 	postRateUcase := postUsecase.NewRateUsecase(postRateRepository)
-	categoryUcase := postUcase.NewCategoryUsecase(categoryRepository)
+	categoryUcase := postUsecase.NewCategoryUsecase(categoryRepository)
 
 	//Middleware
 	mux := http.NewServeMux()
@@ -45,7 +45,7 @@ func Run() {
 	userHandler := userHandler.NewUserHandler(userUcase)
 	userHandler.Configure(mux, mw)
 
-	postHandler := postHandler.NewPostHandler(postUcase, userUcase, postRateUcase)
+	postHandler := postHandler.NewPostHandler(postUcase, userUcase, postRateUcase, categoryUcase)
 	postHandler.Configure(mux, mw)
 	port := config.APIPortDev
 	if port == "" {
