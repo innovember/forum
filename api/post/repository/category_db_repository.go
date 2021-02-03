@@ -56,11 +56,11 @@ func (cr *CategoryDBRepository) IsCategoryExist(category string) (bool, error) {
 	if err = cr.dbConn.QueryRow(`SELECT id FROM categories WHERE name=?`, category).Scan(
 		&id); err != nil {
 		if err == sql.ErrNoRows {
-			return true, nil
+			return false, nil
 		}
 		return false, err
 	}
-	return false, nil
+	return true, nil
 }
 
 func (cr *CategoryDBRepository) GetCategoryIDByName(name string) (id int64, err error) {
