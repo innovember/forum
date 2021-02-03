@@ -107,7 +107,7 @@ func (pr *PostDBRepository) GetCategories(post *models.Post) (status int, err er
 		categories []models.Category
 	)
 	if rows, err = pr.dbConn.Query(`
-		SELECT id,name
+		SELECT c.id,c.name
 		FROM categories c
 		LEFT JOIN posts_categories_bridge pcb
 		ON pcb.post_id = ?
