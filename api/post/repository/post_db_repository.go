@@ -91,9 +91,9 @@ func (pr *PostDBRepository) GetAuthor(post *models.Post) (status int, err error)
 		user models.User
 	)
 	if err = pr.dbConn.QueryRow(`
-	SELECT id,username,email,created_at,last_active FROM users WHERE session_id = ?`, post.AuthorID).Scan(&user.ID, &user.Username, &user.Email, &user.CreatedAt, &user.LastActive); err != nil {
+	SELECT id,username,email,created_at,last_active FROM users WHERE id = ?`, post.AuthorID).Scan(&user.ID, &user.Username, &user.Email, &user.CreatedAt, &user.LastActive); err != nil {
 		if err == sql.ErrNoRows {
-			return http.StatusUnauthorized, errors.New("user not authorized")
+			return http.StatusUnauthorized, errors.New("cant find author of post")
 		}
 		return http.StatusInternalServerError, err
 	}
@@ -128,6 +128,7 @@ func (pr *PostDBRepository) GetCategories(post *models.Post) (status int, err er
 	post.Categories = categories
 	return http.StatusOK, nil
 }
+
 func (pr *PostDBRepository) GetPostByID(userID int64, postID int64) (post *models.Post, status int, err error) {
 	var (
 		p        models.Post
