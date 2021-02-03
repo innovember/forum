@@ -10,9 +10,9 @@ type PostRepository interface {
 	GetPostByID(userID int64, postID int64) (post *models.Post, status int, err error)
 	GetCategories(post *models.Post) (status int, err error)
 	GetAuthor(post *models.Post) (status int, err error)
-	// GetPostsByCategories()
-	// GetPostsByRating()
-	// GetPostsByDate()
+	GetPostsByCategories(categories []string, userID int64) (posts []models.Post, status int, err error)
+	GetPostsByRating(orderBy string, userID int64) (posts []models.Post, status int, err error)
+	GetPostsByDate(orderBy string, userID int64) (posts []models.Post, status int, err error)
 }
 
 type CategoryRepository interface {

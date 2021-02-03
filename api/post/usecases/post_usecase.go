@@ -33,3 +33,24 @@ func (pu *PostUsecase) GetPostByID(userID int64, postID int64) (post *models.Pos
 	}
 	return post, status, nil
 }
+
+func (pu *PostUsecase) GetPostsByCategories(categories []string, userID int64) (posts []models.Post, status int, err error) {
+	if posts, status, err = pu.postRepo.GetPostsByCategories(categories, userID); err != nil {
+		return nil, status, err
+	}
+	return posts, status, nil
+}
+
+func (pu *PostUsecase) GetPostsByRating(orderBy string, userID int64) (posts []models.Post, status int, err error) {
+	if posts, status, err = pu.postRepo.GetPostsByRating(orderBy, userID); err != nil {
+		return nil, status, err
+	}
+	return posts, status, nil
+}
+
+func (pu *PostUsecase) GetPostsByDate(orderBy string, userID int64) (posts []models.Post, status int, err error) {
+	if posts, status, err = pu.postRepo.GetPostsByDate(orderBy, userID); err != nil {
+		return nil, status, err
+	}
+	return posts, status, nil
+}
