@@ -24,3 +24,23 @@ func (ru *RateUsecase) GetRating(postID int64, userID int64) (rating int, userRa
 	}
 	return rating, userRating, nil
 }
+func (ru *RateUsecase) IsRatedBefore(postID int64, userID int64, vote int) (bool, error) {
+	var (
+		isRated bool
+		err     error
+	)
+	if isRated, err = ru.rateRepo.IsRatedBefore(postID, userID, vote); err != nil {
+		return false, err
+	}
+	if isRated {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (ru *RateUsecase) DeleteRateFromPost(postID int64, userID int64, vote int) error {
+	if err := ru.rateRepo.DeleteRateFromPost(postID, userID, vote); err != nil {
+		return err
+	}
+	return nil
+}

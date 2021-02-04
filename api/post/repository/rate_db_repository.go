@@ -57,3 +57,51 @@ func (rr *RateDBRepository) RatePost(postID int64, userID int64, vote int) error
 	}
 	return errors.New("cant set new rate for post")
 }
+
+func (rr *RateDBRepository) IsRatedBefore(postID int64, userID int64, vote int) (bool, error) {
+	var (
+		err  error
+		rate int
+	)
+	if err = rr.dbConn.QueryRow(`SELECT rate FROM post_rating
+								 WHERE post_id = ?
+								 AND user_id = ?
+								 AND rate = ?`, postID, userID, vote).Scan(
+		&rate); err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+	if rate == vote {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (rr *RateDBRepository) DeleteRateFromPost(postID int64, userID int64, vote int) error {
+	var (
+		result       sql.Result
+		rowsAffected int64
+		err          error
+	)
+	if result, err = rr.dbConn.Exec(
+		`DELETE FROM post_rating
+		WHERE post_id = ?
+		AND user_id = ?
+		AND vote = ?`, postID, userID, vote,
+	); err != nil {
+		if err != sql.ErrNoRows {
+			return err
+		}
+		return errors.New("post with such rate not found")
+	}
+
+	if rowsAffected, err = result.RowsAffected(); err != nil {
+		return err
+	}
+	if rowsAffected > 0 {
+		return nil
+	}
+	return errors.New("could not delete the rate")
+}
