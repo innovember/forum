@@ -3,9 +3,11 @@ package repository
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/innovember/forum/api/models"
 	"github.com/innovember/forum/api/post"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -149,4 +151,129 @@ func (pr *PostDBRepository) GetPostByID(userID int64, postID int64) (post *model
 		return nil, http.StatusInternalServerError, err
 	}
 	return &p, http.StatusOK, nil
+}
+
+func (pr *PostDBRepository) GetPostsByCategories(categories []string, userID int64) (posts []models.Post, status int, err error) {
+	var (
+		rows           *sql.Rows
+		categoriesList string = fmt.Sprintf("\"%s\"", strings.Join(categories, "\", \""))
+		rateRepo              = NewRateDBRepository(pr.dbConn)
+	)
+	query := `
+		SELECT p.*
+		FROM posts_categories_bridge as pcb
+		INNER JOIN posts as p
+		ON p.id = pcb.post_id
+		INNER JOIN categories as c
+		ON c.id=pcb.category_id
+		WHERE c.name in (?)
+		GROUP BY p.id
+		HAVING COUNT(DISTINCT c.id) = ?
+		`
+	if rows, err = pr.dbConn.Query(query, categoriesList, len(categories)); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var p models.Post
+		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
+			&p.CreatedAt)
+		if status, err = pr.GetAuthor(&p); err != nil {
+			return nil, status, err
+		}
+		if status, err = pr.GetCategories(&p); err != nil {
+			return nil, status, err
+		}
+		if p.PostRating, p.UserRating, err = rateRepo.GetPostRating(p.ID, userID); err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+		posts = append(posts, p)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return posts, http.StatusOK, nil
+}
+
+func (pr *PostDBRepository) GetPostsByRating(orderBy string, userID int64) (posts []models.Post, status int, err error) {
+	var (
+		rows *sql.Rows
+	)
+	if rows, err = pr.dbConn.Query(`
+		SELECT *,
+		(SELECT TOTAL(rate)
+			FROM post_rating
+			WHERE post_id = posts.id) AS rating,
+		IFNULL (
+				(
+					SELECT rate
+					FROM post_rating
+					WHERE post_id = posts.id
+					AND user_id = $1
+					),0) AS userRating
+		FROM posts
+		ORDER BY rating $2
+		`, userID, orderBy); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var p models.Post
+		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
+			&p.CreatedAt, &p.PostRating, &p.UserRating)
+		if status, err = pr.GetAuthor(&p); err != nil {
+			return nil, status, err
+		}
+		if status, err = pr.GetCategories(&p); err != nil {
+			return nil, status, err
+		}
+		posts = append(posts, p)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return posts, http.StatusOK, nil
+}
+
+func (pr *PostDBRepository) GetPostsByDate(orderBy string, userID int64) (posts []models.Post, status int, err error) {
+	var (
+		rows *sql.Rows
+	)
+	if rows, err = pr.dbConn.Query(`
+		SELECT *,
+		(SELECT TOTAL(rate)
+			FROM post_rating
+			WHERE post_id = posts.id) AS rating,
+		IFNULL (
+				(
+					SELECT rate
+					FROM post_rating
+					WHERE post_id = posts.id
+					AND user_id = $1
+					),0) AS userRating
+		FROM posts
+		ORDER BY created_at $2
+		`, userID, orderBy); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var p models.Post
+		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
+			&p.CreatedAt, &p.PostRating, &p.UserRating)
+		if status, err = pr.GetAuthor(&p); err != nil {
+			return nil, status, err
+		}
+		if status, err = pr.GetCategories(&p); err != nil {
+			return nil, status, err
+		}
+		posts = append(posts, p)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return posts, http.StatusOK, nil
 }

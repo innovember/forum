@@ -94,14 +94,3 @@ func (cr *CategoryDBRepository) GetAllCategories() (categories []models.Category
 	}
 	return categories, http.StatusOK, nil
 }
-func (pr *PostDBRepository) GetPostsByCategories(categories []string, userID int64) (posts []models.Post, status int, err error) {
-	return nil, 0, nil
-}
-
-func (pr *PostDBRepository) GetPostsByRating(orderBy string, userID int64) (posts []models.Post, status int, err error) {
-	return nil, 0, nil
-}
-
-func (pr *PostDBRepository) GetPostsByDate(orderBy string, userID int64) (posts []models.Post, status int, err error) {
-	return nil, 0, nil
-}
