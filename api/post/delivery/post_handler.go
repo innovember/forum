@@ -36,7 +36,7 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/post/", mw.SetHeaders(ph.GetPostHandler))
 	mux.HandleFunc("/api/post/rate", mw.SetHeaders(mw.AuthorizedOnly(ph.RatePostHandler)))
 	mux.HandleFunc("/api/categories", mw.SetHeaders(ph.GetAllCategoriesHandler))
-	// mux.HandleFunc("/api/post/filter", mw.SetHeaders(ph.FilterPosts))
+	mux.HandleFunc("/api/post/filter", mw.SetHeaders(mw.AuthorizedOnly(ph.FilterPosts)))
 }
 
 func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
@@ -206,4 +206,54 @@ func (ph *PostHandler) GetPostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Only GET method allowed, return to main page", 405)
 		return
 	}
+}
+
+func (ph *PostHandler) FilterPosts(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		ph.FilterPostsFunc(w, r)
+	default:
+		http.Error(w, "Only POST method allowed, return to main page", 405)
+	}
+}
+
+func (ph *PostHandler) FilterPostsFunc(w http.ResponseWriter, r *http.Request) {
+	var (
+		input  models.InputFilterPost
+		posts  []models.Post
+		status int
+		err    error
+		cookie *http.Cookie
+		user   *models.User
+	)
+	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+	}
+	cookie, _ = r.Cookie(config.SessionCookieName)
+	if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
+		response.Error(w, status, err)
+		return
+	}
+	switch input.Option {
+	case "categories":
+		if posts, status, err = ph.postUcase.GetPostsByCategories(input.Categories, user.ID); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+	case "date":
+		if posts, status, err = ph.postUcase.GetPostsByDate(input.Date, user.ID); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+	case "rating":
+		if posts, status, err = ph.postUcase.GetPostsByRating(input.Rating, user.ID); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+	default:
+		response.Error(w, http.StatusBadRequest, errors.New("option error in filter"))
+		return
+	}
+	response.Success(w, "filtered by rating", status, posts)
+	return
 }
