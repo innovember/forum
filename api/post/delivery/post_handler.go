@@ -133,7 +133,7 @@ func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Reques
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
 	}
-	if input.Reaction != -1 || input.Reaction != 1 {
+	if input.Reaction != -1 && input.Reaction != 1 {
 		response.Error(w, http.StatusBadRequest, errors.New("only 1 or -1 values accepted"))
 		return
 	}
