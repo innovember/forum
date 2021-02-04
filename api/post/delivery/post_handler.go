@@ -123,12 +123,13 @@ func (ph *PostHandler) RatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	var (
-		input  models.InputRate
-		rating models.Rating
-		err    error
-		status int
-		user   *models.User
-		cookie *http.Cookie
+		input         models.InputRate
+		rating        models.Rating
+		err           error
+		status        int
+		user          *models.User
+		cookie        *http.Cookie
+		isRatedBefore bool
 	)
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
@@ -141,6 +142,36 @@ func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Reques
 	if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
 		response.Error(w, status, err)
 		return
+	}
+	switch input.Reaction {
+	case 1:
+		isRatedBefore, err = ph.rateUcase.IsRatedBefore(input.ID, user.ID, input.Reaction)
+		if err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if isRatedBefore {
+			if err = ph.rateUcase.DeleteRateFromPost(input.ID, user.ID, input.Reaction); err != nil {
+				response.Error(w, http.StatusInternalServerError, err)
+				return
+			}
+			response.Success(w, "rate cancelled due to re-voting", http.StatusOK, nil)
+			return
+		}
+	case -1:
+		isRatedBefore, err = ph.rateUcase.IsRatedBefore(input.ID, user.ID, input.Reaction)
+		if err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if isRatedBefore {
+			if err = ph.rateUcase.DeleteRateFromPost(input.ID, user.ID, input.Reaction); err != nil {
+				response.Error(w, http.StatusInternalServerError, err)
+				return
+			}
+			response.Success(w, "rate cancelled due to re-voting", http.StatusOK, nil)
+			return
+		}
 	}
 	if err = ph.rateUcase.RatePost(input.ID, user.ID, input.Reaction); err != nil {
 		response.Error(w, http.StatusInternalServerError, err)
