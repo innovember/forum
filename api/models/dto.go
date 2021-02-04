@@ -25,6 +25,13 @@ type InputComment struct {
 }
 
 type InputRate struct {
-	ID       int64 `json:"id"`
-	Reaction int   `json:"reaction"`
+	ID       int64 `json:"id"`       // postID
+	Reaction int   `json:"reaction"` // 1 or -1
+}
+
+type InputFilterPost struct {
+	Option     string   `json:"option"` // categories or date or rating
+	Date       string   `json:"date"`   // ASC or DESC
+	Rating     string   `json:"rating"` // ASC or DESC
+	Categories []string `json:"categories"`
 }
