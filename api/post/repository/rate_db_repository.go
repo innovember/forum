@@ -89,7 +89,7 @@ func (rr *RateDBRepository) DeleteRateFromPost(postID int64, userID int64, vote 
 		`DELETE FROM post_rating
 		WHERE post_id = ?
 		AND user_id = ?
-		AND vote = ?`, postID, userID, vote,
+		AND rate = ?`, postID, userID, vote,
 	); err != nil {
 		if err != sql.ErrNoRows {
 			return err
