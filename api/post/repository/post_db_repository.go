@@ -65,6 +65,7 @@ func (pr *PostDBRepository) GetAllPosts(userID int64) (posts []models.Post, stat
 					AND user_id = $1
 					),0) AS userRating
 		FROM posts
+		ORDER BY created_at DESC
 		`, userID); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
