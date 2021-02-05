@@ -39,9 +39,9 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/post/", mw.SetHeaders(ph.GetPostHandler))
 	mux.HandleFunc("/api/post/rate", mw.SetHeaders(mw.AuthorizedOnly(ph.RatePostHandler)))
 	mux.HandleFunc("/api/categories", mw.SetHeaders(ph.GetAllCategoriesHandler))
-	mux.HandleFunc("/api/post/filter", mw.SetHeaders(mw.AuthorizedOnly(ph.FilterPosts)))
+	mux.HandleFunc("/api/post/filter", mw.SetHeaders(ph.FilterPosts))
 	mux.HandleFunc("/api/comment/create", mw.SetHeaders(mw.AuthorizedOnly(ph.CreateCommentHandler)))
-	mux.HandleFunc("/api/comment/filter", mw.SetHeaders(mw.AuthorizedOnly(ph.FilterComments)))
+	mux.HandleFunc("/api/comment/filter", mw.SetHeaders(ph.FilterComments))
 }
 
 func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
