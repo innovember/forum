@@ -41,4 +41,5 @@ type InputFilterPost struct {
 	Date       string   `json:"date"`     // ASC or DESC
 	Rating     string   `json:"rating"`   // ASC or DESC
 	Categories []string `json:"categories"`
+	UserRating string   `json:"userRating"` // upvoted or downvoted
 }

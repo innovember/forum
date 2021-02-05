@@ -291,6 +291,11 @@ func (ph *PostHandler) FilterPostsFunc(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, status, err)
 			return
 		}
+	case "user":
+		if posts, status, err = ph.postUcase.GetRatedPostsByUser(user.ID, input.UserRating); err != nil {
+			response.Error(w, status, err)
+			return
+		}
 	default:
 		response.Error(w, http.StatusBadRequest, errors.New("option error in filter"))
 		return
