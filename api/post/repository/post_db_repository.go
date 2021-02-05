@@ -151,6 +151,9 @@ func (pr *PostDBRepository) GetPostByID(userID int64, postID int64) (post *model
 	if p.PostRating, p.UserRating, err = rateRepo.GetPostRating(postID, userID); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
+	if status, err = pr.GetCategories(&p); err != nil {
+		return nil, status, err
+	}
 	return &p, http.StatusOK, nil
 }
 
@@ -319,4 +322,46 @@ func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64) (posts []model
 		return nil, http.StatusInternalServerError, err
 	}
 	return posts, http.StatusOK, nil
+}
+
+func (pr *PostDBRepository) GetRatedPostsByUser(userID int64, orderBy string) (posts []models.Post, status int, err error) {
+	var (
+		rows     *sql.Rows
+		vote     int
+		rateRepo = NewRateDBRepository(pr.dbConn)
+	)
+	if orderBy == "upvoted" {
+		vote = 1
+	} else if orderBy == "downvoted" {
+		vote = -1
+	}
+	if rows, err = pr.dbConn.Query(`
+		SELECT p.* FROM posts AS p
+		INNER JOIN post_rating AS pr ON p.id = pr.post_id
+		WHERE pr.user_id = ? AND pr.rate = ?
+		`, userID, vote); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var p models.Post
+		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
+			&p.CreatedAt)
+		if status, err = pr.GetAuthor(&p); err != nil {
+			return nil, status, err
+		}
+		if status, err = pr.GetCategories(&p); err != nil {
+			return nil, status, err
+		}
+		if p.PostRating, p.UserRating, err = rateRepo.GetPostRating(p.ID, p.AuthorID); err != nil {
+			return nil, status, err
+		}
+		posts = append(posts, p)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return posts, http.StatusOK, nil
+
 }

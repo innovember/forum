@@ -12,6 +12,7 @@ type PostUsecase interface {
 	GetPostsByRating(orderBy string, userID int64) (posts []models.Post, status int, err error)
 	GetPostsByDate(orderBy string, userID int64) (posts []models.Post, status int, err error)
 	GetAllPostsByAuthorID(authorID int64) (posts []models.Post, status int, err error)
+	GetRatedPostsByUser(userID int64, orderBy string) (posts []models.Post, status int, err error)
 }
 
 type CategoryUsecase interface {
