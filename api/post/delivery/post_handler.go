@@ -40,7 +40,8 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/post/rate", mw.SetHeaders(mw.AuthorizedOnly(ph.RatePostHandler)))
 	mux.HandleFunc("/api/categories", mw.SetHeaders(ph.GetAllCategoriesHandler))
 	mux.HandleFunc("/api/post/filter", mw.SetHeaders(mw.AuthorizedOnly(ph.FilterPosts)))
-	mux.HandleFunc("/api/comment//create", mw.SetHeaders(mw.AuthorizedOnly(ph.CreateCommentHandler)))
+	mux.HandleFunc("/api/comment/create", mw.SetHeaders(mw.AuthorizedOnly(ph.CreateCommentHandler)))
+	mux.HandleFunc("/api/comment/filter", mw.SetHeaders(mw.AuthorizedOnly(ph.FilterComments)))
 }
 
 func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
@@ -337,5 +338,43 @@ func (ph *PostHandler) CreateCommentHandlerFunc(w http.ResponseWriter, r *http.R
 		return
 	}
 	response.Success(w, "new comment created", status, newComment)
+	return
+}
+
+func (ph *PostHandler) FilterComments(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		ph.FilterCommentsFunc(w, r)
+	default:
+		http.Error(w, "Only POST method allowed, return to main page", 405)
+	}
+}
+
+func (ph *PostHandler) FilterCommentsFunc(w http.ResponseWriter, r *http.Request) {
+	var (
+		input    models.InputFindComment
+		comments []models.Comment
+		status   int
+		err      error
+	)
+	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+	}
+	switch input.Option {
+	case "post":
+		if comments, status, err = ph.commentUcase.GetCommentsByPostID(input.PostID); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+	case "user":
+		if comments, status, err = ph.commentUcase.GetCommentsByAuthorID(input.UserID); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+	default:
+		response.Error(w, http.StatusBadRequest, errors.New("option error in filter"))
+		return
+	}
+	response.Success(w, "filtered comments by"+input.Option, status, comments)
 	return
 }
