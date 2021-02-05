@@ -80,3 +80,31 @@ func (cr *CommentDBRepository) GetAuthor(comment *models.Comment) (status int, e
 	comment.Author = &user
 	return http.StatusOK, nil
 }
+
+func (cr *CommentDBRepository) GetCommentsByAuthorID(authorID int64) (comments []models.Comment, status int, err error) {
+	var (
+		rows *sql.Rows
+	)
+	if rows, err = cr.dbConn.Query(`
+		SELECT *,
+		FROM comments
+		WHERE author_id = $1
+		ORDER BY created_at DESC
+		`, authorID); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var c models.Comment
+		rows.Scan(&c.ID, &c.AuthorID, &c.PostID, &c.Content, &c.CreatedAt)
+		if status, err = cr.GetAuthor(&c); err != nil {
+			return nil, status, err
+		}
+		comments = append(comments, c)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return comments, http.StatusOK, nil
+}

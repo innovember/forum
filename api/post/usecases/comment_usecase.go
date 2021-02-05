@@ -24,3 +24,10 @@ func (cu *CommentUsecase) GetCommentsByPostID(postID int64) (comments []models.C
 	}
 	return comments, status, err
 }
+
+func (cu *CommentUsecase) GetCommentsByAuthorID(authorID int64) (comments []models.Comment, status int, err error) {
+	if comments, status, err = cu.commentRepo.GetCommentsByAuthorID(authorID); err != nil {
+		return nil, status, err
+	}
+	return comments, status, err
+}

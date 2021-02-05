@@ -28,4 +28,5 @@ type RateUsecase interface {
 type CommentUsecase interface {
 	Create(userID int64, comment *models.Comment) (newComment *models.Comment, status int, err error)
 	GetCommentsByPostID(postID int64) (comments []models.Comment, status int, err error)
+	GetCommentsByAuthorID(authorID int64) (comments []models.Comment, status int, err error)
 }
