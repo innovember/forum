@@ -281,10 +281,15 @@ func (ph *PostHandler) FilterPostsFunc(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, status, err)
 			return
 		}
+	case "author":
+		if posts, status, err = ph.postUcase.GetAllPostsByAuthorID(input.AuthorID); err != nil {
+			response.Error(w, status, err)
+			return
+		}
 	default:
 		response.Error(w, http.StatusBadRequest, errors.New("option error in filter"))
 		return
 	}
-	response.Success(w, "filtered by rating", status, posts)
+	response.Success(w, "filtered posts by"+input.Option, status, posts)
 	return
 }

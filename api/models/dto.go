@@ -30,8 +30,9 @@ type InputRate struct {
 }
 
 type InputFilterPost struct {
-	Option     string   `json:"option"` // categories or date or rating
-	Date       string   `json:"date"`   // ASC or DESC
-	Rating     string   `json:"rating"` // ASC or DESC
+	Option     string   `json:"option"`   // categories or date or rating or author
+	AuthorID   int64    `json:"authorID"` // getAllPosts created by AuthorID
+	Date       string   `json:"date"`     // ASC or DESC
+	Rating     string   `json:"rating"`   // ASC or DESC
 	Categories []string `json:"categories"`
 }
