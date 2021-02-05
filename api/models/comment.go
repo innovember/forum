@@ -6,4 +6,5 @@ type Comment struct {
 	AuthorID  int64  `json:"-"`
 	Content   string `json:"content"`
 	CreatedAt int64  `json:"createdAt"`
+	Author    *User  `json:"author"`
 }

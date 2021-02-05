@@ -54,6 +54,9 @@ func (cr *CommentDBRepository) GetCommentsByPostID(postID int64) (comments []mod
 	for rows.Next() {
 		var c models.Comment
 		rows.Scan(&c.ID, &c.AuthorID, &c.PostID, &c.Content, &c.CreatedAt)
+		if status, err = cr.GetAuthor(&c); err != nil {
+			return nil, status, err
+		}
 		comments = append(comments, c)
 	}
 	err = rows.Err()
@@ -61,4 +64,19 @@ func (cr *CommentDBRepository) GetCommentsByPostID(postID int64) (comments []mod
 		return nil, http.StatusInternalServerError, err
 	}
 	return comments, http.StatusOK, nil
+}
+
+func (cr *CommentDBRepository) GetAuthor(comment *models.Comment) (status int, err error) {
+	var (
+		user models.User
+	)
+	if err = cr.dbConn.QueryRow(`
+	SELECT id,username,email,created_at,last_active FROM users WHERE id = ?`, comment.AuthorID).Scan(&user.ID, &user.Username, &user.Email, &user.CreatedAt, &user.LastActive); err != nil {
+		if err == sql.ErrNoRows {
+			return http.StatusUnauthorized, errors.New("cant find author of post")
+		}
+		return http.StatusInternalServerError, err
+	}
+	comment.Author = &user
+	return http.StatusOK, nil
 }

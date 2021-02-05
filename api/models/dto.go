@@ -24,6 +24,12 @@ type InputComment struct {
 	Content string `json:"content"`
 }
 
+type InputFindComment struct {
+	Option string `json:"option"` // user or post
+	PostID int64  `json:"post_id"`
+	UserID int64  `json:"user_id"`
+}
+
 type InputRate struct {
 	ID       int64 `json:"id"`       // postID
 	Reaction int   `json:"reaction"` // 1 or -1
