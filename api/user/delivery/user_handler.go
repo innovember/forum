@@ -2,6 +2,7 @@ package delivery
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/innovember/forum/api/config"
 	"github.com/innovember/forum/api/middleware"
 	"github.com/innovember/forum/api/models"
@@ -9,6 +10,7 @@ import (
 	"github.com/innovember/forum/api/security"
 	"github.com/innovember/forum/api/user"
 	"net/http"
+	"strconv"
 )
 
 type UserHandler struct {
@@ -25,6 +27,7 @@ func (uh *UserHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/auth/signin", mw.SetHeaders(uh.SignIn))
 	mux.HandleFunc("/api/auth/signout", mw.SetHeaders(mw.AuthorizedOnly(uh.SignOut)))
 	mux.HandleFunc("/api/auth/me", mw.SetHeaders(mw.AuthorizedOnly(uh.Me)))
+	mux.HandleFunc("/api/user/", mw.SetHeaders(uh.GetUserByID))
 }
 
 func (uh *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -186,4 +189,28 @@ func (uh *UserHandler) MeFunc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response.Success(w, "get user info successfully", status, user)
+}
+
+func (uh *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		var (
+			user   *models.User
+			err    error
+			userID int
+		)
+		_id := r.URL.Path[len("/api/user/"):]
+		if userID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("user id doesn't exist"))
+			return
+		}
+		user, err = uh.userUcase.GetUserByID(int64(userID))
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		response.Success(w, "fetch user by id", http.StatusOK, user)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
+		return
+	}
 }
