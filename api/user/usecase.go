@@ -7,6 +7,7 @@ import (
 type UserUsecase interface {
 	Create(user *models.User) (status int, err error)
 	GetAllUsers() (users []models.User, status int, err error)
+	GetUserByID(userID int64) (user *models.User, err error)
 	GetPassword(username string) (password string, status int, err error)
 	FindUserByUsername(username string) (user *models.User, status int, err error)
 	UpdateSession(userID int64, sessionValue string) (err error)

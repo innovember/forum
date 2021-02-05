@@ -155,3 +155,20 @@ func (ur *UserDBRepository) CheckSessionByUsername(username string) (status int,
 	}
 	return http.StatusForbidden, errors.New("user already authorized")
 }
+
+func (ur *UserDBRepository) GetUserByID(userID int64) (*models.User, error) {
+	var (
+		user models.User
+		err  error
+	)
+	if err = ur.dbConn.QueryRow(`
+	SELECT id,username,email,created_at,last_active
+	FROM users WHERE id = ?`, userID).Scan(&user.ID, &user.Username,
+		&user.Email, &user.CreatedAt, &user.LastActive); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("cant find user with such id")
+		}
+		return nil, err
+	}
+	return &user, nil
+}

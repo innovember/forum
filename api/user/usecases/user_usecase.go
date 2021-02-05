@@ -64,3 +64,9 @@ func (uu *UserUsecase) CheckSessionByUsername(username string) (status int, err 
 	}
 	return status, nil
 }
+func (uu *UserUsecase) GetUserByID(userID int64) (user *models.User, err error) {
+	if user, err = uu.userRepo.GetUserByID(userID); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
