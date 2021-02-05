@@ -19,15 +19,18 @@ type PostHandler struct {
 	userUcase     user.UserUsecase
 	rateUcase     post.RateUsecase
 	categoryUcase post.CategoryUsecase
+	commentUcase  post.CommentUsecase
 }
 
 func NewPostHandler(postUcase post.PostUsecase, userUcase user.UserUsecase,
-	rateUcase post.RateUsecase, categoryUcase post.CategoryUsecase) *PostHandler {
+	rateUcase post.RateUsecase, categoryUcase post.CategoryUsecase,
+	commentUcase post.CommentUsecase) *PostHandler {
 	return &PostHandler{
 		postUcase:     postUcase,
 		userUcase:     userUcase,
 		rateUcase:     rateUcase,
-		categoryUcase: categoryUcase}
+		categoryUcase: categoryUcase,
+		commentUcase:  commentUcase}
 }
 
 func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareManager) {
@@ -37,6 +40,7 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/post/rate", mw.SetHeaders(mw.AuthorizedOnly(ph.RatePostHandler)))
 	mux.HandleFunc("/api/categories", mw.SetHeaders(ph.GetAllCategoriesHandler))
 	mux.HandleFunc("/api/post/filter", mw.SetHeaders(mw.AuthorizedOnly(ph.FilterPosts)))
+	mux.HandleFunc("/api/comment//create", mw.SetHeaders(mw.AuthorizedOnly(ph.CreateCommentHandler)))
 }
 
 func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
@@ -291,5 +295,47 @@ func (ph *PostHandler) FilterPostsFunc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response.Success(w, "filtered posts by"+input.Option, status, posts)
+	return
+}
+
+func (ph *PostHandler) CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		ph.CreateCommentHandlerFunc(w, r)
+	default:
+		http.Error(w, "Only POST method allowed, return to main page", 405)
+	}
+}
+
+func (ph *PostHandler) CreateCommentHandlerFunc(w http.ResponseWriter, r *http.Request) {
+	var (
+		input      models.InputComment
+		comment    models.Comment
+		newComment *models.Comment
+		now        = time.Now().Unix()
+		status     int
+		err        error
+		cookie     *http.Cookie
+		user       *models.User
+	)
+	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+	}
+	cookie, _ = r.Cookie(config.SessionCookieName)
+	if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
+		response.Error(w, status, err)
+		return
+	}
+	comment = models.Comment{
+		AuthorID:  user.ID,
+		PostID:    input.PostID,
+		Content:   input.Content,
+		CreatedAt: now,
+	}
+	if newComment, status, err = ph.commentUcase.Create(user.ID, &comment); err != nil {
+		response.Error(w, status, err)
+		return
+	}
+	response.Success(w, "new comment created", status, newComment)
 	return
 }
