@@ -163,18 +163,17 @@ func (pr *PostDBRepository) GetPostsByCategories(categories []string, userID int
 		categoriesList string = fmt.Sprintf("\"%s\"", strings.Join(categories, "\", \""))
 		rateRepo              = NewRateDBRepository(pr.dbConn)
 	)
-	query := `
+	query := fmt.Sprintf(`
 		SELECT p.*
 		FROM posts_categories_bridge as pcb
 		INNER JOIN posts as p
 		ON p.id = pcb.post_id
 		INNER JOIN categories as c
 		ON c.id=pcb.category_id
-		WHERE c.name in (?)
+		WHERE c.name in (%s)
 		GROUP BY p.id
-		HAVING COUNT(DISTINCT c.id) = ?
-		`
-	if rows, err = pr.dbConn.Query(query, categoriesList, len(categories)); err != nil {
+		HAVING COUNT(DISTINCT c.id) = %d`, categoriesList, len(categories))
+	if rows, err = pr.dbConn.Query(query); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 	defer rows.Close()

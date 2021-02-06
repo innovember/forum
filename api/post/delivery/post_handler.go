@@ -265,10 +265,13 @@ func (ph *PostHandler) FilterPostsFunc(w http.ResponseWriter, r *http.Request) {
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
 	}
-	cookie, _ = r.Cookie(config.SessionCookieName)
-	if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
-		response.Error(w, status, err)
-		return
+	cookie, err = r.Cookie(config.SessionCookieName)
+	if err != nil {
+		user = &models.User{ID: -1}
+	} else {
+		if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
+			user = &models.User{ID: -1}
+		}
 	}
 	switch input.Option {
 	case "categories":
