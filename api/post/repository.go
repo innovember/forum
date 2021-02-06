@@ -34,4 +34,5 @@ type CommentRepository interface {
 	GetCommentsByPostID(postID int64) (comments []models.Comment, status int, err error)
 	GetAuthor(comment *models.Comment) (status int, err error)
 	GetCommentsByAuthorID(authorID int64) (comments []models.Comment, status int, err error)
+	GetCommentsNumberByPostID(postID int64) (commentsNumber int, err error)
 }

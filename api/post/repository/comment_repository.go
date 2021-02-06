@@ -108,3 +108,16 @@ func (cr *CommentDBRepository) GetCommentsByAuthorID(authorID int64) (comments [
 	}
 	return comments, http.StatusOK, nil
 }
+
+func (cr *CommentDBRepository) GetCommentsNumberByPostID(postID int64) (commentsNumber int, err error) {
+	if err = cr.dbConn.QueryRow(`
+	SELECT COUNT(id)
+	FROM comments
+	WHERE post_id = ?`, postID).Scan(&commentsNumber); err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil
+		}
+		return 0, err
+	}
+	return commentsNumber, nil
+}

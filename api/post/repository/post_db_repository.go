@@ -50,7 +50,8 @@ func (pr *PostDBRepository) Create(post *models.Post, categories []string) (*mod
 
 func (pr *PostDBRepository) GetAllPosts(userID int64) (posts []models.Post, status int, err error) {
 	var (
-		rows *sql.Rows
+		rows        *sql.Rows
+		commentRepo = NewCommentDBRepository(pr.dbConn)
 	)
 	if rows, err = pr.dbConn.Query(`
 		SELECT *,
@@ -78,6 +79,9 @@ func (pr *PostDBRepository) GetAllPosts(userID int64) (posts []models.Post, stat
 			return nil, status, err
 		}
 		if status, err = pr.GetCategories(&p); err != nil {
+			return nil, status, err
+		}
+		if p.CommentsNumber, err = commentRepo.GetCommentsNumberByPostID(p.ID); err != nil {
 			return nil, status, err
 		}
 		posts = append(posts, p)
@@ -134,8 +138,9 @@ func (pr *PostDBRepository) GetCategories(post *models.Post) (status int, err er
 
 func (pr *PostDBRepository) GetPostByID(userID int64, postID int64) (post *models.Post, status int, err error) {
 	var (
-		p        models.Post
-		rateRepo = NewRateDBRepository(pr.dbConn)
+		p           models.Post
+		rateRepo    = NewRateDBRepository(pr.dbConn)
+		commentRepo = NewCommentDBRepository(pr.dbConn)
 	)
 	if err = pr.dbConn.QueryRow(`
 	SELECT * FROM posts WHERE id = ?`, postID,
@@ -154,6 +159,9 @@ func (pr *PostDBRepository) GetPostByID(userID int64, postID int64) (post *model
 	if status, err = pr.GetCategories(&p); err != nil {
 		return nil, status, err
 	}
+	if p.CommentsNumber, err = commentRepo.GetCommentsNumberByPostID(p.ID); err != nil {
+		return nil, status, err
+	}
 	return &p, http.StatusOK, nil
 }
 
@@ -162,6 +170,7 @@ func (pr *PostDBRepository) GetPostsByCategories(categories []string, userID int
 		rows           *sql.Rows
 		categoriesList string = fmt.Sprintf("\"%s\"", strings.Join(categories, "\", \""))
 		rateRepo              = NewRateDBRepository(pr.dbConn)
+		commentRepo           = NewCommentDBRepository(pr.dbConn)
 	)
 	query := fmt.Sprintf(`
 		SELECT p.*
@@ -190,6 +199,9 @@ func (pr *PostDBRepository) GetPostsByCategories(categories []string, userID int
 		if p.PostRating, p.UserRating, err = rateRepo.GetPostRating(p.ID, userID); err != nil {
 			return nil, http.StatusInternalServerError, err
 		}
+		if p.CommentsNumber, err = commentRepo.GetCommentsNumberByPostID(p.ID); err != nil {
+			return nil, status, err
+		}
 		posts = append(posts, p)
 	}
 	err = rows.Err()
@@ -201,7 +213,8 @@ func (pr *PostDBRepository) GetPostsByCategories(categories []string, userID int
 
 func (pr *PostDBRepository) GetPostsByRating(orderBy string, userID int64) (posts []models.Post, status int, err error) {
 	var (
-		rows *sql.Rows
+		rows        *sql.Rows
+		commentRepo = NewCommentDBRepository(pr.dbConn)
 	)
 	if rows, err = pr.dbConn.Query(`
 		SELECT *,
@@ -231,6 +244,9 @@ func (pr *PostDBRepository) GetPostsByRating(orderBy string, userID int64) (post
 		if status, err = pr.GetCategories(&p); err != nil {
 			return nil, status, err
 		}
+		if p.CommentsNumber, err = commentRepo.GetCommentsNumberByPostID(p.ID); err != nil {
+			return nil, status, err
+		}
 		posts = append(posts, p)
 	}
 	err = rows.Err()
@@ -242,7 +258,8 @@ func (pr *PostDBRepository) GetPostsByRating(orderBy string, userID int64) (post
 
 func (pr *PostDBRepository) GetPostsByDate(orderBy string, userID int64) (posts []models.Post, status int, err error) {
 	var (
-		rows *sql.Rows
+		rows        *sql.Rows
+		commentRepo = NewCommentDBRepository(pr.dbConn)
 	)
 	if rows, err = pr.dbConn.Query(`
 		SELECT *,
@@ -270,6 +287,9 @@ func (pr *PostDBRepository) GetPostsByDate(orderBy string, userID int64) (posts 
 			return nil, status, err
 		}
 		if status, err = pr.GetCategories(&p); err != nil {
+			return nil, status, err
+		}
+		if p.CommentsNumber, err = commentRepo.GetCommentsNumberByPostID(p.ID); err != nil {
 			return nil, status, err
 		}
 		posts = append(posts, p)
@@ -325,9 +345,10 @@ func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64) (posts []model
 
 func (pr *PostDBRepository) GetRatedPostsByUser(userID int64, orderBy string) (posts []models.Post, status int, err error) {
 	var (
-		rows     *sql.Rows
-		vote     int
-		rateRepo = NewRateDBRepository(pr.dbConn)
+		rows        *sql.Rows
+		vote        int
+		rateRepo    = NewRateDBRepository(pr.dbConn)
+		commentRepo = NewCommentDBRepository(pr.dbConn)
 	)
 	if orderBy == "upvoted" {
 		vote = 1
@@ -353,6 +374,9 @@ func (pr *PostDBRepository) GetRatedPostsByUser(userID int64, orderBy string) (p
 			return nil, status, err
 		}
 		if p.PostRating, p.UserRating, err = rateRepo.GetPostRating(p.ID, p.AuthorID); err != nil {
+			return nil, status, err
+		}
+		if p.CommentsNumber, err = commentRepo.GetCommentsNumberByPostID(p.ID); err != nil {
 			return nil, status, err
 		}
 		posts = append(posts, p)
