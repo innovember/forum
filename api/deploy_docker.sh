@@ -6,7 +6,7 @@ docker images
 
 echo "----------------------------------------------------------------"
 
-docker container run -p 9090:8181 --detach --name forumService forum
+docker container run -p 9090:8081 --detach --name forumService forum
 
 echo "----------------------------------------------------------------"
 
