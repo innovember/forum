@@ -1,0 +1,18 @@
+version: "3"
+services:
+  api:
+    container_name: api-container
+    restart: always
+    build: ./api
+    volumes:
+      - ./api/db:/app/db
+    ports:
+      - "9090:8081"
+  client:
+    container_name: client-container
+    restart: always
+    build: ./ui
+    ports:
+      - "8080:8080"
+    depends_on:
+      - api
