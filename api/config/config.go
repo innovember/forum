@@ -13,5 +13,10 @@ const (
 	DBSchema          = "schema.sql"
 	SessionCookieName = "forumSecretKey"
 	SessionExpiration = 1 * time.Hour
-	ClientURL         = "http://localhost:3000"
+	ClientURLDev      = "http://localhost:3000"
+	ClientURLProd     = "https://forume-react.herokuapp.com"
+)
+
+var (
+	ClientURL = ClientURLProd
 )
