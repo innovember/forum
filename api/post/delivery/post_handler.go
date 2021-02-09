@@ -41,7 +41,7 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/post/rate", mw.SetHeaders(mw.AuthorizedOnly(ph.RatePostHandler)))
 	mux.HandleFunc("/api/post/filter", mw.SetHeaders(ph.FilterPosts))
 	mux.HandleFunc("/api/post/edit", mw.SetHeaders(mw.AuthorizedOnly(ph.EditPostHandler)))
-	// mux.HandleFunc("/api/post/delete", mw.SetHeaders(mw.AuthorizedOnly(ph.DeletePostHandler)))
+	mux.HandleFunc("/api/post/delete", mw.SetHeaders(mw.AuthorizedOnly(ph.DeletePostHandler)))
 	mux.HandleFunc("/api/categories", mw.SetHeaders(ph.GetAllCategoriesHandler))
 	// Comments
 	mux.HandleFunc("/api/comment/create", mw.SetHeaders(mw.AuthorizedOnly(ph.CreateCommentHandler)))
@@ -72,6 +72,7 @@ func (ph *PostHandler) CreatePostHandlerFunc(w http.ResponseWriter, r *http.Requ
 	)
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
+		return
 	}
 	cookie, _ = r.Cookie(config.SessionCookieName)
 	if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
@@ -145,6 +146,7 @@ func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Reques
 	)
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
+		return
 	}
 	if input.Reaction != -1 && input.Reaction != 1 {
 		response.Error(w, http.StatusBadRequest, errors.New("only 1 or -1 values accepted"))
@@ -271,6 +273,7 @@ func (ph *PostHandler) FilterPostsFunc(w http.ResponseWriter, r *http.Request) {
 	)
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
+		return
 	}
 	cookie, err = r.Cookie(config.SessionCookieName)
 	if err != nil {
@@ -336,6 +339,7 @@ func (ph *PostHandler) CreateCommentHandlerFunc(w http.ResponseWriter, r *http.R
 	)
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
+		return
 	}
 	cookie, _ = r.Cookie(config.SessionCookieName)
 	if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
@@ -375,6 +379,7 @@ func (ph *PostHandler) FilterCommentsFunc(w http.ResponseWriter, r *http.Request
 	)
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
+		return
 	}
 	switch input.Option {
 	case "post":
@@ -409,6 +414,7 @@ func (ph *PostHandler) EditPostHandler(w http.ResponseWriter, r *http.Request) {
 		)
 		if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 			response.Error(w, http.StatusBadRequest, err)
+			return
 		}
 		cookie, _ = r.Cookie(config.SessionCookieName)
 		if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
@@ -417,6 +423,7 @@ func (ph *PostHandler) EditPostHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		if input.AuthorID != user.ID {
 			response.Error(w, http.StatusForbidden, errors.New("can't edit another user's post"))
+			return
 		}
 		post = models.Post{
 			ID:       input.ID,
@@ -438,6 +445,40 @@ func (ph *PostHandler) EditPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	} else {
 		http.Error(w, "Only PUT method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (ph *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "DELETE" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+			input  models.InputPost
+		)
+		if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if input.AuthorID != user.ID {
+			response.Error(w, http.StatusForbidden, errors.New("can't delete another user's post"))
+			return
+		}
+		if status, err = ph.postUcase.Delete(input.ID); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		response.Success(w, "post has been deleted", status, nil)
+		return
+	} else {
+		http.Error(w, "Only DELETE method allowed, return to main page", 405)
 		return
 	}
 }
