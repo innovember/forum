@@ -23,8 +23,8 @@ func (cr *CommentDBRepository) Create(userID int64, comment *models.Comment) (*m
 		err          error
 	)
 	if result, err = cr.dbConn.Exec(`
-	INSERT INTO comments(author_id,post_id,content, created_at)
-	VALUES(?,?,?,?)`, comment.AuthorID, comment.PostID, comment.Content, comment.CreatedAt); err != nil {
+	INSERT INTO comments(author_id,post_id,content, created_at,edited_at)
+	VALUES(?,?,?,?,?)`, comment.AuthorID, comment.PostID, comment.Content, comment.CreatedAt, comment.EditedAt); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 	if comment.ID, err = result.LastInsertId(); err != nil {

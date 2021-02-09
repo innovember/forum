@@ -34,14 +34,20 @@ func NewPostHandler(postUcase post.PostUsecase, userUcase user.UserUsecase,
 }
 
 func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareManager) {
+	// Posts
 	mux.HandleFunc("/api/post/create", mw.SetHeaders(mw.AuthorizedOnly(ph.CreatePostHandler)))
 	mux.HandleFunc("/api/posts", mw.SetHeaders(ph.GetPostsHandler))
 	mux.HandleFunc("/api/post/", mw.SetHeaders(ph.GetPostHandler))
 	mux.HandleFunc("/api/post/rate", mw.SetHeaders(mw.AuthorizedOnly(ph.RatePostHandler)))
-	mux.HandleFunc("/api/categories", mw.SetHeaders(ph.GetAllCategoriesHandler))
 	mux.HandleFunc("/api/post/filter", mw.SetHeaders(ph.FilterPosts))
+	// mux.HandleFunc("/api/post/edit", mw.SetHeaders(mw.AuthorizedOnly(ph.EditPostHandler)))
+	// mux.HandleFunc("/api/post/delete", mw.SetHeaders(mw.AuthorizedOnly(ph.DeletePostHandler)))
+	mux.HandleFunc("/api/categories", mw.SetHeaders(ph.GetAllCategoriesHandler))
+	// Comments
 	mux.HandleFunc("/api/comment/create", mw.SetHeaders(mw.AuthorizedOnly(ph.CreateCommentHandler)))
 	mux.HandleFunc("/api/comment/filter", mw.SetHeaders(ph.FilterComments))
+	// mux.HandleFunc("/api/comment/edit", mw.SetHeaders(mw.AuthorizedOnly(ph.EditCommentHandler)))
+	// mux.HandleFunc("/api/comment/delete", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteCommentHandler)))
 }
 
 func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
@@ -79,6 +85,7 @@ func (ph *PostHandler) CreatePostHandlerFunc(w http.ResponseWriter, r *http.Requ
 		Content:    input.Content,
 		CreatedAt:  now,
 		PostRating: 0,
+		EditedAt:   0,
 	}
 	if newPost, status, err = ph.postUcase.Create(&post, input.Categories); err != nil {
 		response.Error(w, status, err)
@@ -340,6 +347,7 @@ func (ph *PostHandler) CreateCommentHandlerFunc(w http.ResponseWriter, r *http.R
 		PostID:    input.PostID,
 		Content:   input.Content,
 		CreatedAt: now,
+		EditedAt:  0,
 	}
 	if newComment, status, err = ph.commentUcase.Create(user.ID, &comment); err != nil {
 		response.Error(w, status, err)

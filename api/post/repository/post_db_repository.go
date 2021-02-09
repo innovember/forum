@@ -28,8 +28,8 @@ func (pr *PostDBRepository) Create(post *models.Post, categories []string) (*mod
 		err          error
 	)
 	if result, err = pr.dbConn.Exec(`
-	INSERT INTO posts(author_id,title, content, created_at)
-	VALUES(?,?,?,?)`, post.AuthorID, post.Title, post.Content, now); err != nil {
+	INSERT INTO posts(author_id,title, content, created_at,edited_at)
+	VALUES(?,?,?,?,?)`, post.AuthorID, post.Title, post.Content, now, post.EditedAt); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 	if post.ID, err = result.LastInsertId(); err != nil {
