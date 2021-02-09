@@ -10,5 +10,6 @@ type Post struct {
 	PostRating     int        `json:"postRating"`
 	UserRating     int        `json:"userRating"`
 	CreatedAt      int64      `json:"createdAt,omitempty"`
+	EditedAt       int64      `json:"editedAt,omitempty"`
 	CommentsNumber int        `json:"commentsNumber"`
 }

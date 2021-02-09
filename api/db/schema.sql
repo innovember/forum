@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS posts (
 	title TEXT,
 	content TEXT,
 	created_at INTEGER,
+	edited_at INTEGER,
 	FOREIGN KEY (author_id) REFERENCES users (id) ON
 DELETE CASCADE
 );
@@ -52,6 +53,7 @@ CREATE TABLE IF NOT EXISTS comments (
 	post_id INTEGER,
 	content TEXT,
 	created_at INTEGER,
+	edited_at INTEGER,
 	FOREIGN KEY (author_id) REFERENCES posts (id) ON
 DELETE CASCADE,
 	FOREIGN KEY (post_id) REFERENCES posts (id) ON
