@@ -408,6 +408,9 @@ func (pr *PostDBRepository) Update(post *models.Post) (editedPost *models.Post, 
 							WHERE id = ?`,
 		post.Title, post.Content, post.EditedAt,
 		post.ID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusInternalServerError, errors.New("post not found")
+		}
 		tx.Rollback()
 		return nil, http.StatusInternalServerError, err
 	}
@@ -416,9 +419,41 @@ func (pr *PostDBRepository) Update(post *models.Post) (editedPost *models.Post, 
 	}
 	if rowsAffected > 0 {
 		if err := tx.Commit(); err != nil {
-			return nil,http.StatusInternalServerError, err
+			return nil, http.StatusInternalServerError, err
 		}
 		return post, http.StatusOK, nil
 	}
-	return nil, http.StatusBadRequest, errors.New("could not update the post")
+	return nil, http.StatusNotModified, errors.New("could not update the post")
+}
+
+func (pr *PostDBRepository) Delete(postID int64) (status int, err error) {
+	var (
+		ctx          context.Context
+		tx           *sql.Tx
+		result       sql.Result
+		rowsAffected int64
+	)
+	ctx = context.Background()
+	if tx, err = pr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return http.StatusInternalServerError, err
+	}
+	if result, err = tx.Exec(`DELETE FROM posts
+								WHERE id = ?`,
+		postID); err != nil {
+		if err == sql.ErrNoRows {
+			return http.StatusNotFound, errors.New("post not found")
+		}
+		tx.Rollback()
+		return http.StatusInternalServerError, err
+	}
+	if rowsAffected, err = result.RowsAffected(); err != nil {
+		return http.StatusInternalServerError, nil
+	}
+	if rowsAffected > 0 {
+		if err := tx.Commit(); err != nil {
+			return http.StatusInternalServerError, err
+		}
+		return http.StatusOK, nil
+	}
+	return http.StatusNotModified, errors.New("could not delete the post")
 }

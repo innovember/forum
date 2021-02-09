@@ -14,6 +14,7 @@ type PostUsecase interface {
 	GetAllPostsByAuthorID(authorID int64) (posts []models.Post, status int, err error)
 	GetRatedPostsByUser(userID int64, orderBy string) (posts []models.Post, status int, err error)
 	Update(post *models.Post) (editedPost *models.Post, status int, err error)
+	Delete(postID int64) (status int, err error)
 }
 
 type CategoryUsecase interface {

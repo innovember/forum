@@ -74,3 +74,9 @@ func (pu *PostUsecase) Update(post *models.Post) (editedPost *models.Post, statu
 	}
 	return editedPost, status, err
 }
+func (pu *PostUsecase) Delete(postID int64) (status int, err error) {
+	if status, err = pu.postRepo.Delete(postID); err != nil {
+		return status, err
+	}
+	return status, nil
+}
