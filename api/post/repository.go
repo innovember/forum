@@ -15,11 +15,16 @@ type PostRepository interface {
 	GetPostsByDate(orderBy string, userID int64) (posts []models.Post, status int, err error)
 	GetAllPostsByAuthorID(authorID int64) (posts []models.Post, status int, err error)
 	GetRatedPostsByUser(userID int64, orderBy string) (posts []models.Post, status int, err error)
+	Update(post *models.Post) (editedPost *models.Post, status int, err error)
 }
 
 type CategoryRepository interface {
 	Create(postID int64, categories []string) (err error)
 	GetAllCategories() (categories []models.Category, status int, err error)
+	GetCategoryIDByName(name string) (id int64, err error)
+	IsCategoryExist(category string) (bool, error)
+	Update(postID int64, categories []string) (err error)
+	DeleteFromPostCategoriesBridge(postID int64) (err error)
 }
 
 type RateRepository interface {

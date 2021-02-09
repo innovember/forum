@@ -67,3 +67,10 @@ func (pu *PostUsecase) GetRatedPostsByUser(userID int64, orderBy string) (posts 
 	}
 	return posts, status, nil
 }
+
+func (pu *PostUsecase) Update(post *models.Post) (editedPost *models.Post, status int, err error) {
+	if editedPost, status, err = pu.postRepo.Update(post); err != nil {
+		return nil, status, err
+	}
+	return editedPost, status, err
+}

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -387,4 +388,37 @@ func (pr *PostDBRepository) GetRatedPostsByUser(userID int64, orderBy string) (p
 	}
 	return posts, http.StatusOK, nil
 
+}
+
+func (pr *PostDBRepository) Update(post *models.Post) (editedPost *models.Post, status int, err error) {
+	var (
+		ctx          context.Context
+		tx           *sql.Tx
+		result       sql.Result
+		rowsAffected int64
+	)
+	ctx = context.Background()
+	if tx, err = pr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	if result, err = tx.Exec(`UPDATE posts
+							SET title = ?,
+							content = ?,
+							edited_at = ?
+							WHERE id = ?`,
+		post.Title, post.Content, post.EditedAt,
+		post.ID); err != nil {
+		tx.Rollback()
+		return nil, http.StatusInternalServerError, err
+	}
+	if rowsAffected, err = result.RowsAffected(); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	if rowsAffected > 0 {
+		if err := tx.Commit(); err != nil {
+			return nil,http.StatusInternalServerError, err
+		}
+		return post, http.StatusOK, nil
+	}
+	return nil, http.StatusBadRequest, errors.New("could not update the post")
 }
