@@ -19,3 +19,10 @@ func (cu *CategoryUsecase) GetAllCategories() (categories []models.Category, sta
 	}
 	return categories, status, nil
 }
+
+func (cu *CategoryUsecase) Update(postID int64, categories []string) (err error) {
+	if err = cu.categoryRepo.Update(postID, categories); err != nil {
+		return err
+	}
+	return nil
+}

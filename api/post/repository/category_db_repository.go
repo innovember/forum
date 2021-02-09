@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"github.com/innovember/forum/api/models"
 	"github.com/innovember/forum/api/post"
@@ -93,4 +94,44 @@ func (cr *CategoryDBRepository) GetAllCategories() (categories []models.Category
 		return nil, http.StatusInternalServerError, err
 	}
 	return categories, http.StatusOK, nil
+}
+
+func (cr *CategoryDBRepository) Update(postID int64, categories []string) (err error) {
+	if err = cr.DeleteFromPostCategoriesBridge(postID); err != nil {
+		return err
+	}
+	if err = cr.Create(postID, categories); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (cr *CategoryDBRepository) DeleteFromPostCategoriesBridge(postID int64) (err error) {
+	var (
+		ctx context.Context
+		tx  *sql.Tx
+	)
+	ctx = context.Background()
+	if tx, err = cr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(`DELETE FROM post_categories_bridge
+						WHERE post_id = ?)`, postID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if _, err = tx.Exec(`DELETE FROM categories
+						 WHERE id IN
+						(SELECT c.id FROM categories AS c 
+						LEFT JOIN posts_categories_bridge AS pcb
+						ON c.id = pcb.category_id
+						WHERE pcb.category_id IS NULL
+ 						)`); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
 }
