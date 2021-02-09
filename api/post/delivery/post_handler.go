@@ -40,7 +40,7 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/post/", mw.SetHeaders(ph.GetPostHandler))
 	mux.HandleFunc("/api/post/rate", mw.SetHeaders(mw.AuthorizedOnly(ph.RatePostHandler)))
 	mux.HandleFunc("/api/post/filter", mw.SetHeaders(ph.FilterPosts))
-	// mux.HandleFunc("/api/post/edit", mw.SetHeaders(mw.AuthorizedOnly(ph.EditPostHandler)))
+	mux.HandleFunc("/api/post/edit", mw.SetHeaders(mw.AuthorizedOnly(ph.EditPostHandler)))
 	// mux.HandleFunc("/api/post/delete", mw.SetHeaders(mw.AuthorizedOnly(ph.DeletePostHandler)))
 	mux.HandleFunc("/api/categories", mw.SetHeaders(ph.GetAllCategoriesHandler))
 	// Comments
@@ -393,4 +393,51 @@ func (ph *PostHandler) FilterCommentsFunc(w http.ResponseWriter, r *http.Request
 	}
 	response.Success(w, "filtered comments by"+input.Option, status, comments)
 	return
+}
+
+func (ph *PostHandler) EditPostHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "PUT" {
+		var (
+			input      models.InputPost
+			post       models.Post
+			editedPost *models.Post
+			now        = time.Now().Unix()
+			status     int
+			err        error
+			cookie     *http.Cookie
+			user       *models.User
+		)
+		if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+		}
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if input.AuthorID != user.ID {
+			response.Error(w, http.StatusForbidden, errors.New("can't edit another user's post"))
+		}
+		post = models.Post{
+			ID:       input.ID,
+			AuthorID: input.AuthorID,
+			Author:   user,
+			Title:    input.Title,
+			Content:  input.Content,
+			EditedAt: now,
+		}
+		if err = ph.categoryUcase.Update(post.ID, input.Categories); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if editedPost, status, err = ph.postUcase.Update(&post); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		response.Success(w, "post has been edited", status, editedPost)
+		return
+	} else {
+		http.Error(w, "Only PUT method allowed, return to main page", 405)
+		return
+	}
 }

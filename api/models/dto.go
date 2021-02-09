@@ -13,6 +13,7 @@ type InputUserSignUp struct {
 
 type InputPost struct {
 	ID         int64    `json:"id"`
+	AuthorID   int64    `json:"authorID"`
 	Title      string   `json:"title"`
 	Content    string   `json:"content"`
 	Categories []string `json:"categories"`
