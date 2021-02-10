@@ -26,3 +26,10 @@ func (cu *CategoryUsecase) Update(postID int64, categories []string) (err error)
 	}
 	return nil
 }
+
+func (cu *CategoryUsecase) DeleteFromPostCategoriesBridge(postID int64) (err error) {
+	if err = cu.categoryRepo.DeleteFromPostCategoriesBridge(postID); err != nil {
+		return err
+	}
+	return nil
+}

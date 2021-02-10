@@ -442,7 +442,6 @@ func (ph *PostHandler) EditPostHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		response.Success(w, "post has been edited", status, editedPost)
-		return
 	} else {
 		http.Error(w, "Only PUT method allowed, return to main page", 405)
 		return
@@ -471,12 +470,15 @@ func (ph *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request)
 			response.Error(w, http.StatusForbidden, errors.New("can't delete another user's post"))
 			return
 		}
+		if err = ph.categoryUcase.DeleteFromPostCategoriesBridge(input.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
 		if status, err = ph.postUcase.Delete(input.ID); err != nil {
 			response.Error(w, status, err)
 			return
 		}
 		response.Success(w, "post has been deleted", status, nil)
-		return
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
 		return
