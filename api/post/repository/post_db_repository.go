@@ -182,7 +182,8 @@ func (pr *PostDBRepository) GetPostsByCategories(categories []string, userID int
 		ON c.id=pcb.category_id
 		WHERE c.name in (%s)
 		GROUP BY p.id
-		HAVING COUNT(DISTINCT c.id) = %d`, categoriesList, len(categories))
+		HAVING COUNT(DISTINCT c.id) = %d
+		ORDER BY p.created_at DESC`, categoriesList, len(categories))
 	if rows, err = pr.dbConn.Query(query); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
@@ -360,6 +361,7 @@ func (pr *PostDBRepository) GetRatedPostsByUser(userID int64, orderBy string) (p
 		SELECT p.* FROM posts AS p
 		INNER JOIN post_rating AS pr ON p.id = pr.post_id
 		WHERE pr.user_id = ? AND pr.rate = ?
+		ORDER BY p.created_at DESC
 		`, userID, vote); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
