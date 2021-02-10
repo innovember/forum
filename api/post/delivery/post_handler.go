@@ -41,7 +41,7 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/post/rate", mw.SetHeaders(mw.AuthorizedOnly(ph.RatePostHandler)))
 	mux.HandleFunc("/api/post/filter", mw.SetHeaders(ph.FilterPosts))
 	mux.HandleFunc("/api/post/edit", mw.SetHeaders(mw.AuthorizedOnly(ph.EditPostHandler)))
-	mux.HandleFunc("/api/post/delete", mw.SetHeaders(mw.AuthorizedOnly(ph.DeletePostHandler)))
+	mux.HandleFunc("/api/post/delete/", mw.SetHeaders(mw.AuthorizedOnly(ph.DeletePostHandler)))
 	mux.HandleFunc("/api/categories", mw.SetHeaders(ph.GetAllCategoriesHandler))
 	// Comments
 	mux.HandleFunc("/api/comment/create", mw.SetHeaders(mw.AuthorizedOnly(ph.CreateCommentHandler)))
@@ -455,10 +455,12 @@ func (ph *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request)
 			err    error
 			cookie *http.Cookie
 			user   *models.User
-			input  models.InputPost
+			postID int
+			post   *models.Post
 		)
-		if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
-			response.Error(w, http.StatusBadRequest, err)
+		_id := r.URL.Path[len("/api/post/delete/"):]
+		if postID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("post id doesn't exist"))
 			return
 		}
 		cookie, _ = r.Cookie(config.SessionCookieName)
@@ -466,15 +468,20 @@ func (ph *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request)
 			response.Error(w, status, err)
 			return
 		}
-		if input.AuthorID != user.ID {
+		post, status, err = ph.postUcase.GetPostByID(user.ID, int64(postID))
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		if post.AuthorID != user.ID {
 			response.Error(w, http.StatusForbidden, errors.New("can't delete another user's post"))
 			return
 		}
-		if err = ph.categoryUcase.DeleteFromPostCategoriesBridge(input.ID); err != nil {
+		if err = ph.categoryUcase.DeleteFromPostCategoriesBridge(post.ID); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		if status, err = ph.postUcase.Delete(input.ID); err != nil {
+		if status, err = ph.postUcase.Delete(post.ID); err != nil {
 			response.Error(w, status, err)
 			return
 		}
