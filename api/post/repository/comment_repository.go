@@ -53,7 +53,7 @@ func (cr *CommentDBRepository) GetCommentsByPostID(postID int64) (comments []mod
 	defer rows.Close()
 	for rows.Next() {
 		var c models.Comment
-		rows.Scan(&c.ID, &c.AuthorID, &c.PostID, &c.Content, &c.CreatedAt)
+		rows.Scan(&c.ID, &c.AuthorID, &c.PostID, &c.Content, &c.CreatedAt, &c.EditedAt)
 		if status, err = cr.GetAuthor(&c); err != nil {
 			return nil, status, err
 		}
@@ -96,7 +96,7 @@ func (cr *CommentDBRepository) GetCommentsByAuthorID(authorID int64) (comments [
 	defer rows.Close()
 	for rows.Next() {
 		var c models.Comment
-		rows.Scan(&c.ID, &c.AuthorID, &c.PostID, &c.Content, &c.CreatedAt)
+		rows.Scan(&c.ID, &c.AuthorID, &c.PostID, &c.Content, &c.CreatedAt, &c.EditedAt)
 		if status, err = cr.GetAuthor(&c); err != nil {
 			return nil, status, err
 		}

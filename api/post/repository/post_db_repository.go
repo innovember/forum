@@ -75,7 +75,7 @@ func (pr *PostDBRepository) GetAllPosts(userID int64) (posts []models.Post, stat
 	for rows.Next() {
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
-			&p.CreatedAt, &p.PostRating, &p.UserRating)
+			&p.CreatedAt, &p.EditedAt, &p.PostRating, &p.UserRating)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -145,7 +145,7 @@ func (pr *PostDBRepository) GetPostByID(userID int64, postID int64) (post *model
 	)
 	if err = pr.dbConn.QueryRow(`
 	SELECT * FROM posts WHERE id = ?`, postID,
-	).Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content, &p.CreatedAt); err != nil {
+	).Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content, &p.CreatedAt, &p.EditedAt); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusUnauthorized, errors.New("post not found")
 		}
@@ -190,7 +190,7 @@ func (pr *PostDBRepository) GetPostsByCategories(categories []string, userID int
 	for rows.Next() {
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
-			&p.CreatedAt)
+			&p.CreatedAt, &p.EditedAt)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -238,7 +238,7 @@ func (pr *PostDBRepository) GetPostsByRating(orderBy string, userID int64) (post
 	for rows.Next() {
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
-			&p.CreatedAt, &p.PostRating, &p.UserRating)
+			&p.CreatedAt, &p.EditedAt, &p.PostRating, &p.UserRating)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -283,7 +283,7 @@ func (pr *PostDBRepository) GetPostsByDate(orderBy string, userID int64) (posts 
 	for rows.Next() {
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
-			&p.CreatedAt, &p.PostRating, &p.UserRating)
+			&p.CreatedAt, &p.EditedAt, &p.PostRating, &p.UserRating)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -328,7 +328,7 @@ func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64) (posts []model
 	for rows.Next() {
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
-			&p.CreatedAt, &p.PostRating, &p.UserRating)
+			&p.CreatedAt, &p.EditedAt, &p.PostRating, &p.UserRating)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -367,7 +367,7 @@ func (pr *PostDBRepository) GetRatedPostsByUser(userID int64, orderBy string) (p
 	for rows.Next() {
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
-			&p.CreatedAt)
+			&p.CreatedAt, &p.EditedAt)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
