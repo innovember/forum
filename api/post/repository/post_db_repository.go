@@ -321,7 +321,7 @@ func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64, userID int64) 
 	for rows.Next() {
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
-			&p.CreatedAt, &p.EditedAt, &p.PostRating, &p.UserRating)
+			&p.CreatedAt, &p.EditedAt)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
