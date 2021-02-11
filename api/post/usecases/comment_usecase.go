@@ -31,3 +31,10 @@ func (cu *CommentUsecase) GetCommentsByAuthorID(authorID int64) (comments []mode
 	}
 	return comments, status, err
 }
+
+func (cu *CommentUsecase) Update(comment *models.Comment) (editedComment *models.Comment, status int, err error) {
+	if editedComment, status, err = cu.commentRepo.Update(comment); err != nil {
+		return nil, status, err
+	}
+	return editedComment, status, err
+}

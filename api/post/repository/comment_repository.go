@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"github.com/innovember/forum/api/models"
@@ -120,4 +121,39 @@ func (cr *CommentDBRepository) GetCommentsNumberByPostID(postID int64) (comments
 		return 0, err
 	}
 	return commentsNumber, nil
+}
+
+func (cr *CommentDBRepository) Update(comment *models.Comment) (editedComment *models.Comment, status int, err error) {
+	var (
+		ctx          context.Context
+		tx           *sql.Tx
+		result       sql.Result
+		rowsAffected int64
+	)
+	ctx = context.Background()
+	if tx, err = cr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	if result, err = tx.Exec(`UPDATE comments
+							SET content = ?,
+							edited_at = ?
+							WHERE post_id = ?
+							and id = ?`,
+		comment.Content, comment.EditedAt, comment.PostID, comment.ID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusInternalServerError, errors.New("comment not found")
+		}
+		tx.Rollback()
+		return nil, http.StatusInternalServerError, err
+	}
+	if rowsAffected, err = result.RowsAffected(); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	if rowsAffected > 0 {
+		if err := tx.Commit(); err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+		return comment, http.StatusOK, nil
+	}
+	return nil, http.StatusNotModified, errors.New("could not update the comment")
 }
