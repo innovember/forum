@@ -300,7 +300,7 @@ func (ph *PostHandler) FilterPostsFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	case "author":
-		if posts, status, err = ph.postUcase.GetAllPostsByAuthorID(input.AuthorID); err != nil {
+		if posts, status, err = ph.postUcase.GetAllPostsByAuthorID(input.AuthorID, user.ID); err != nil {
 			response.Error(w, status, err)
 			return
 		}
@@ -491,6 +491,7 @@ func (ph *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 }
+
 func (ph *PostHandler) EditCommentHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "PUT" {
 		var (

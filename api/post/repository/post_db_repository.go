@@ -303,7 +303,7 @@ func (pr *PostDBRepository) GetPostsByDate(orderBy string, userID int64) (posts 
 	return posts, http.StatusOK, nil
 }
 
-func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64) (posts []models.Post, status int, err error) {
+func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64, userID int64) (posts []models.Post, status int, err error) {
 	var (
 		rows        *sql.Rows
 		commentRepo = NewCommentDBRepository(pr.dbConn)
@@ -318,12 +318,12 @@ func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64) (posts []model
 					SELECT rate
 					FROM post_rating
 					WHERE post_id = posts.id
-					AND user_id = $1
+					AND user_id = $2
 					),0) AS userRating
 		FROM posts
 		WHERE author_id = $1
 		ORDER BY created_at DESC
-		`, authorID); err != nil {
+		`, authorID, userID); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 	defer rows.Close()

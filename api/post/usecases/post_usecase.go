@@ -55,8 +55,8 @@ func (pu *PostUsecase) GetPostsByDate(orderBy string, userID int64) (posts []mod
 	return posts, status, nil
 }
 
-func (pu *PostUsecase) GetAllPostsByAuthorID(authorID int64) (posts []models.Post, status int, err error) {
-	if posts, status, err = pu.postRepo.GetAllPostsByAuthorID(authorID); err != nil {
+func (pu *PostUsecase) GetAllPostsByAuthorID(authorID int64, userID int64) (posts []models.Post, status int, err error) {
+	if posts, status, err = pu.postRepo.GetAllPostsByAuthorID(authorID, userID); err != nil {
 		return nil, status, err
 	}
 	return posts, status, nil
