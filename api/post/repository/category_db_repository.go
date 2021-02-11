@@ -115,8 +115,8 @@ func (cr *CategoryDBRepository) DeleteFromPostCategoriesBridge(postID int64) (er
 	if tx, err = cr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
 		return err
 	}
-	if _, err = tx.Exec(`DELETE FROM post_categories_bridge
-						WHERE post_id = ?)`, postID); err != nil {
+	if _, err = tx.Exec(`DELETE FROM posts_categories_bridge
+						WHERE post_id = ?`, postID); err != nil {
 		tx.Rollback()
 		return err
 	}
