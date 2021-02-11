@@ -307,23 +307,14 @@ func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64, userID int64) 
 	var (
 		rows        *sql.Rows
 		commentRepo = NewCommentDBRepository(pr.dbConn)
+		rateRepo    = NewRateDBRepository(pr.dbConn)
 	)
 	if rows, err = pr.dbConn.Query(`
-		SELECT *,
-		(SELECT TOTAL(rate)
-			FROM post_rating
-			WHERE post_id = posts.id) AS rating,
-		IFNULL (
-				(
-					SELECT rate
-					FROM post_rating
-					WHERE post_id = posts.id
-					AND user_id = $2
-					),0) AS userRating
+		SELECT *
 		FROM posts
-		WHERE author_id = $1
+		WHERE author_id = ?
 		ORDER BY created_at DESC
-		`, authorID, userID); err != nil {
+		`, authorID); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 	defer rows.Close()
@@ -336,6 +327,9 @@ func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64, userID int64) 
 		}
 		if status, err = pr.GetCategories(&p); err != nil {
 			return nil, status, err
+		}
+		if p.PostRating, p.UserRating, err = rateRepo.GetPostRating(p.ID, userID); err != nil {
+			return nil, http.StatusInternalServerError, err
 		}
 		if p.CommentsNumber, err = commentRepo.GetCommentsNumberByPostID(p.ID); err != nil {
 			return nil, status, err
@@ -381,7 +375,7 @@ func (pr *PostDBRepository) GetRatedPostsByUser(userID int64, orderBy string) (p
 		if status, err = pr.GetCategories(&p); err != nil {
 			return nil, status, err
 		}
-		if p.PostRating, p.UserRating, err = rateRepo.GetPostRating(p.ID, p.AuthorID); err != nil {
+		if p.PostRating, p.UserRating, err = rateRepo.GetPostRating(p.ID, userID); err != nil {
 			return nil, status, err
 		}
 		if p.CommentsNumber, err = commentRepo.GetCommentsNumberByPostID(p.ID); err != nil {
