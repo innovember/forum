@@ -305,7 +305,8 @@ func (pr *PostDBRepository) GetPostsByDate(orderBy string, userID int64) (posts 
 
 func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64) (posts []models.Post, status int, err error) {
 	var (
-		rows *sql.Rows
+		rows        *sql.Rows
+		commentRepo = NewCommentDBRepository(pr.dbConn)
 	)
 	if rows, err = pr.dbConn.Query(`
 		SELECT *,
@@ -334,6 +335,9 @@ func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64) (posts []model
 			return nil, status, err
 		}
 		if status, err = pr.GetCategories(&p); err != nil {
+			return nil, status, err
+		}
+		if p.CommentsNumber, err = commentRepo.GetCommentsNumberByPostID(p.ID); err != nil {
 			return nil, status, err
 		}
 		posts = append(posts, p)
