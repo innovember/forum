@@ -361,12 +361,13 @@ func (pr *PostDBRepository) GetRatedPostsByUser(userID int64, orderBy string) (p
 	} else if orderBy == "downvoted" {
 		vote = -1
 	}
-	if rows, err = pr.dbConn.Query(`
+	query := fmt.Sprintf(`
 		SELECT p.* FROM posts AS p
 		INNER JOIN post_rating AS pr ON p.id = pr.post_id
-		WHERE pr.user_id = ? AND pr.rate = ?
+		WHERE pr.user_id = %d AND pr.rate = %d
 		ORDER BY p.created_at DESC
-		`, userID, vote); err != nil {
+		`, userID, vote)
+	if rows, err = pr.dbConn.Query(query); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 	defer rows.Close()
