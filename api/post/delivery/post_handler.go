@@ -46,7 +46,7 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	// Comments
 	mux.HandleFunc("/api/comment/create", mw.SetHeaders(mw.AuthorizedOnly(ph.CreateCommentHandler)))
 	mux.HandleFunc("/api/comment/filter", mw.SetHeaders(ph.FilterComments))
-	// mux.HandleFunc("/api/comment/edit", mw.SetHeaders(mw.AuthorizedOnly(ph.EditCommentHandler)))
+	mux.HandleFunc("/api/comment/edit", mw.SetHeaders(mw.AuthorizedOnly(ph.EditCommentHandler)))
 	// mux.HandleFunc("/api/comment/delete", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteCommentHandler)))
 }
 
@@ -488,6 +488,49 @@ func (ph *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request)
 		response.Success(w, "post has been deleted", status, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
+		return
+	}
+}
+func (ph *PostHandler) EditCommentHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "PUT" {
+		var (
+			input         models.InputComment
+			comment       models.Comment
+			editedComment *models.Comment
+			now           = time.Now().Unix()
+			status        int
+			err           error
+			cookie        *http.Cookie
+			user          *models.User
+		)
+		if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if input.AuthorID != user.ID {
+			response.Error(w, http.StatusForbidden, errors.New("can't edit another user's comment"))
+			return
+		}
+		comment = models.Comment{
+			ID:       input.ID,
+			AuthorID: input.AuthorID,
+			PostID:   input.PostID,
+			Author:   user,
+			Content:  input.Content,
+			EditedAt: now,
+		}
+		if editedComment, status, err = ph.commentUcase.Update(&comment); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		response.Success(w, "comment has been edited", status, editedComment)
+	} else {
+		http.Error(w, "Only PUT method allowed, return to main page", 405)
 		return
 	}
 }

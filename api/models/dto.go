@@ -20,9 +20,10 @@ type InputPost struct {
 }
 
 type InputComment struct {
-	ID      int64  `json:"id"`
-	PostID  int64  `json:"post_id"`
-	Content string `json:"content"`
+	ID       int64  `json:"id"`
+	AuthorID int64  `json:"authorID"`
+	PostID   int64  `json:"post_id"`
+	Content  string `json:"content"`
 }
 
 type InputFindComment struct {
