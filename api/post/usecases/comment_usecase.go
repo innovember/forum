@@ -38,3 +38,17 @@ func (cu *CommentUsecase) Update(comment *models.Comment) (editedComment *models
 	}
 	return editedComment, status, err
 }
+
+func (cu *CommentUsecase) GetCommentByID(commentID int64) (comment *models.Comment, status int, err error) {
+	if comment, status, err = cu.commentRepo.GetCommentByID(commentID); err != nil {
+		return nil, status, err
+	}
+	return comment, status, err
+}
+
+func (cu *CommentUsecase) Delete(commentID int64) (status int, err error) {
+	if status, err = cu.commentRepo.Delete(commentID); err != nil {
+		return status, err
+	}
+	return status, err
+}

@@ -35,4 +35,6 @@ type CommentUsecase interface {
 	GetCommentsByPostID(postID int64) (comments []models.Comment, status int, err error)
 	GetCommentsByAuthorID(authorID int64) (comments []models.Comment, status int, err error)
 	Update(comment *models.Comment) (editedComment *models.Comment, status int, err error)
+	GetCommentByID(commentID int64) (comment *models.Comment, status int, err error)
+	Delete(commentID int64) (status int, err error)
 }
