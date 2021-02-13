@@ -59,3 +59,20 @@ DELETE CASCADE,
 	FOREIGN KEY (post_id) REFERENCES posts (id) ON
 DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS notifications (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	receiver_id INTEGER,
+	post_id INTEGER,
+	rate_id INTEGER,
+	comment_id INTEGER,
+	created_at INTEGER,
+	FOREIGN KEY (receiver_id) REFERENCES users (id) ON
+DELETE CASCADE,
+	FOREIGN KEY (post_id) REFERENCES posts (id) ON
+DELETE CASCADE,
+	FOREIGN KEY (comment_id) REFERENCES comments (id) ON
+DELETE CASCADE,
+	FOREIGN KEY (rate_id) REFERENCES post_rating (id) ON
+DELETE CASCADE
+);

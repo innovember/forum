@@ -18,5 +18,5 @@ const (
 )
 
 var (
-	ClientURL = ClientURLProd
+	ClientURL = ClientURLDev
 )
