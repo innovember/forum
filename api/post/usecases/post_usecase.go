@@ -61,8 +61,8 @@ func (pu *PostUsecase) GetAllPostsByAuthorID(authorID int64, userID int64) (post
 	}
 	return posts, status, nil
 }
-func (pu *PostUsecase) GetRatedPostsByUser(userID int64, orderBy string) (posts []models.Post, status int, err error) {
-	if posts, status, err = pu.postRepo.GetRatedPostsByUser(userID, orderBy); err != nil {
+func (pu *PostUsecase) GetRatedPostsByUser(userID int64, orderBy string, requestorID int64) (posts []models.Post, status int, err error) {
+	if posts, status, err = pu.postRepo.GetRatedPostsByUser(userID, orderBy, requestorID); err != nil {
 		return nil, status, err
 	}
 	return posts, status, nil

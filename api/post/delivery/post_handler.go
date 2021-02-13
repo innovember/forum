@@ -308,7 +308,7 @@ func (ph *PostHandler) FilterPostsFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	case "user":
-		if posts, status, err = ph.postUcase.GetRatedPostsByUser(input.UserID, input.UserRating); err != nil {
+		if posts, status, err = ph.postUcase.GetRatedPostsByUser(input.UserID, input.UserRating, user.ID); err != nil {
 			response.Error(w, status, err)
 			return
 		}

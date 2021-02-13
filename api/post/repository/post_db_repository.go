@@ -343,7 +343,7 @@ func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64, userID int64) 
 	return posts, http.StatusOK, nil
 }
 
-func (pr *PostDBRepository) GetRatedPostsByUser(userID int64, orderBy string) (posts []models.Post, status int, err error) {
+func (pr *PostDBRepository) GetRatedPostsByUser(userID int64, orderBy string, requestorID int64) (posts []models.Post, status int, err error) {
 	var (
 		rows        *sql.Rows
 		vote        int
@@ -375,7 +375,7 @@ func (pr *PostDBRepository) GetRatedPostsByUser(userID int64, orderBy string) (p
 		if status, err = pr.GetCategories(&p); err != nil {
 			return nil, status, err
 		}
-		if p.PostRating, p.UserRating, err = rateRepo.GetPostRating(p.ID, userID); err != nil {
+		if p.PostRating, p.UserRating, err = rateRepo.GetPostRating(p.ID, requestorID); err != nil {
 			return nil, status, err
 		}
 		if p.CommentsNumber, err = commentRepo.GetCommentsNumberByPostID(p.ID); err != nil {

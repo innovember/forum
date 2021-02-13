@@ -12,7 +12,7 @@ type PostUsecase interface {
 	GetPostsByRating(orderBy string, userID int64) (posts []models.Post, status int, err error)
 	GetPostsByDate(orderBy string, userID int64) (posts []models.Post, status int, err error)
 	GetAllPostsByAuthorID(authorID int64, userID int64) (posts []models.Post, status int, err error)
-	GetRatedPostsByUser(userID int64, orderBy string) (posts []models.Post, status int, err error)
+	GetRatedPostsByUser(userID int64, orderBy string, requestorID int64) (posts []models.Post, status int, err error)
 	Update(post *models.Post) (editedPost *models.Post, status int, err error)
 	Delete(postID int64) (status int, err error)
 }
