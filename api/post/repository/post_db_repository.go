@@ -101,7 +101,7 @@ func (pr *PostDBRepository) GetAuthor(post *models.Post) (status int, err error)
 	if err = pr.dbConn.QueryRow(`
 	SELECT id,username,email,created_at,last_active FROM users WHERE id = ?`, post.AuthorID).Scan(&user.ID, &user.Username, &user.Email, &user.CreatedAt, &user.LastActive); err != nil {
 		if err == sql.ErrNoRows {
-			return http.StatusUnauthorized, errors.New("cant find author of post")
+			return http.StatusNotFound, errors.New("cant find author of post")
 		}
 		return http.StatusInternalServerError, err
 	}
@@ -147,7 +147,7 @@ func (pr *PostDBRepository) GetPostByID(userID int64, postID int64) (post *model
 	SELECT * FROM posts WHERE id = ?`, postID,
 	).Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content, &p.CreatedAt, &p.EditedAt); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, http.StatusUnauthorized, errors.New("post not found")
+			return nil, http.StatusNotFound, errors.New("post not found")
 		}
 		return nil, http.StatusInternalServerError, err
 	}
