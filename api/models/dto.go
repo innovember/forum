@@ -44,4 +44,5 @@ type InputFilterPost struct {
 	Rating     string   `json:"rating"`   // ASC or DESC
 	Categories []string `json:"categories"`
 	UserRating string   `json:"userRating"` // upvoted or downvoted
+	UserID     int64    `json:"userID"`
 }
