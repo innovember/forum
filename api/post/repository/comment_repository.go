@@ -87,7 +87,7 @@ func (cr *CommentDBRepository) GetCommentsByAuthorID(authorID int64) (comments [
 		rows *sql.Rows
 	)
 	if rows, err = cr.dbConn.Query(`
-		SELECT *,
+		SELECT *
 		FROM comments
 		WHERE author_id = $1
 		ORDER BY created_at DESC
