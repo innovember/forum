@@ -47,7 +47,10 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/comment/create", mw.SetHeaders(mw.AuthorizedOnly(ph.CreateCommentHandler)))
 	mux.HandleFunc("/api/comment/filter", mw.SetHeaders(ph.FilterComments))
 	mux.HandleFunc("/api/comment/edit", mw.SetHeaders(mw.AuthorizedOnly(ph.EditCommentHandler)))
-	// mux.HandleFunc("/api/comment/delete", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteCommentHandler)))
+	mux.HandleFunc("/api/comment/delete", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteCommentHandler)))
+	// Notifications
+	// mux.HandleFunc("/api/notifications/all", mw.SetHeaders(mw.AuthorizedOnly(ph.GetAllNotificationsHandler)))
+	// mux.HandleFunc("/api/notifications/delete", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteNotificationsHandler)))
 }
 
 func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
@@ -532,6 +535,45 @@ func (ph *PostHandler) EditCommentHandler(w http.ResponseWriter, r *http.Request
 		response.Success(w, "comment has been edited", status, editedComment)
 	} else {
 		http.Error(w, "Only PUT method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (ph *PostHandler) DeleteCommentHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "DELETE" {
+		var (
+			status    int
+			err       error
+			cookie    *http.Cookie
+			user      *models.User
+			commentID int
+			comment   *models.Comment
+		)
+		_id := r.URL.Path[len("/api/comment/delete/"):]
+		if commentID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("comment id doesn't exist"))
+			return
+		}
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if comment, status, err = ph.commentUcase.GetCommentByID(int64(commentID)); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if comment.AuthorID != user.ID {
+			response.Error(w, http.StatusForbidden, errors.New("can't delete another user's comment"))
+			return
+		}
+		if status, err = ph.commentUcase.Delete(comment.ID); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		response.Success(w, "comment has been deleted", status, nil)
+	} else {
+		http.Error(w, "Only DELETE method allowed, return to main page", 405)
 		return
 	}
 }
