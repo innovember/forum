@@ -47,10 +47,10 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/comment/create", mw.SetHeaders(mw.AuthorizedOnly(ph.CreateCommentHandler)))
 	mux.HandleFunc("/api/comment/filter", mw.SetHeaders(ph.FilterComments))
 	mux.HandleFunc("/api/comment/edit", mw.SetHeaders(mw.AuthorizedOnly(ph.EditCommentHandler)))
-	mux.HandleFunc("/api/comment/delete", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteCommentHandler)))
+	mux.HandleFunc("/api/comment/delete/", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteCommentHandler)))
 	// Notifications
-	// mux.HandleFunc("/api/notifications/all", mw.SetHeaders(mw.AuthorizedOnly(ph.GetAllNotificationsHandler)))
-	// mux.HandleFunc("/api/notifications/delete", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteNotificationsHandler)))
+	// mux.HandleFunc("/api/notifications", mw.SetHeaders(mw.AuthorizedOnly(ph.GetAllNotificationsHandler)))
+	// mux.HandleFunc("/api/notifications/delete/", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteNotificationsHandler)))
 }
 
 func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {

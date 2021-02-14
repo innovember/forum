@@ -38,3 +38,8 @@ type CommentUsecase interface {
 	GetCommentByID(commentID int64) (comment *models.Comment, status int, err error)
 	Delete(commentID int64) (status int, err error)
 }
+
+type NotificationUsecase interface {
+	Create(notification *models.Notification) (newNotification *models.Notification, status int, err error)
+	DeleteAllNotifications(receiverID int64) (status int, err error)
+}
