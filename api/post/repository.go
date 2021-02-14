@@ -29,7 +29,7 @@ type CategoryRepository interface {
 }
 
 type RateRepository interface {
-	RatePost(postID int64, userID int64, vote int) error
+	RatePost(postID int64, userID int64, vote int) (int64, error)
 	GetPostRating(postID int64, userID int64) (rating int, userRating int, err error)
 	IsRatedBefore(postID int64, userID int64, vote int) (bool, error)
 	DeleteRateFromPost(postID int64, userID int64, vote int) error

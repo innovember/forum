@@ -12,11 +12,11 @@ func NewRateUsecase(repo post.RateRepository) post.RateUsecase {
 	return &RateUsecase{rateRepo: repo}
 }
 
-func (ru *RateUsecase) RatePost(postID int64, userID int64, vote int) error {
-	if err := ru.rateRepo.RatePost(postID, userID, vote); err != nil {
-		return err
+func (ru *RateUsecase) RatePost(postID int64, userID int64, vote int) (rateID int64, err error) {
+	if rateID, err = ru.rateRepo.RatePost(postID, userID, vote); err != nil {
+		return 0, err
 	}
-	return nil
+	return rateID, nil
 }
 func (ru *RateUsecase) GetRating(postID int64, userID int64) (rating int, userRating int, err error) {
 	if rating, userRating, err = ru.rateRepo.GetPostRating(postID, userID); err != nil {

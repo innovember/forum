@@ -34,11 +34,12 @@ func (rr *RateDBRepository) GetPostRating(postID int64, userID int64) (rating in
 
 }
 
-func (rr *RateDBRepository) RatePost(postID int64, userID int64, vote int) error {
+func (rr *RateDBRepository) RatePost(postID int64, userID int64, vote int) (int64, error) {
 	var (
 		result       sql.Result
 		rowsAffected int64
 		err          error
+		rateID       int64
 	)
 	if result, err = rr.dbConn.Exec(`
 		REPLACE INTO post_rating(id, user_id, post_id,rate)
@@ -47,15 +48,18 @@ func (rr *RateDBRepository) RatePost(postID int64, userID int64, vote int) error
 				WHERE user_id = $1 AND post_id = $2),
 			$1,$2,$3)`,
 		userID, postID, vote); err != nil {
-		return err
+		return 0, err
+	}
+	if rateID, err = result.LastInsertId(); err != nil {
+		return 0, err
 	}
 	if rowsAffected, err = result.RowsAffected(); err != nil {
-		return err
+		return 0, err
 	}
 	if rowsAffected > 0 {
-		return nil
+		return rateID, nil
 	}
-	return errors.New("cant set new rate for post")
+	return 0, errors.New("cant set new rate for post")
 }
 
 func (rr *RateDBRepository) IsRatedBefore(postID int64, userID int64, vote int) (bool, error) {

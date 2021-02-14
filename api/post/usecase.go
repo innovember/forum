@@ -24,7 +24,7 @@ type CategoryUsecase interface {
 }
 
 type RateUsecase interface {
-	RatePost(postID int64, userID int64, vote int) error
+	RatePost(postID int64, userID int64, vote int) (int64, error)
 	GetRating(postID int64, userID int64) (rating int, userRating int, err error)
 	IsRatedBefore(postID int64, userID int64, vote int) (bool, error)
 	DeleteRateFromPost(postID int64, userID int64, vote int) error
