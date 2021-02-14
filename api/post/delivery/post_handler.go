@@ -202,8 +202,9 @@ func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	notification := models.Notification{
-		PostID: input.ID,
-		RateID: rateID,
+		PostID:    input.ID,
+		RateID:    rateID,
+		CommentID: 0,
 	}
 	if _, status, err = ph.notificationUcase.Create(&notification); err != nil {
 		response.Error(w, status, err)

@@ -24,10 +24,16 @@ func (nr *NotificationDBRepository) Create(notification *models.Notification) (*
 		rowsAffected int64
 		now          = time.Now().Unix()
 		err          error
+		postRepo     = NewPostDBRepository(nr.dbConn)
+		post         *models.Post
+		status       int
 	)
+	if post, status, err = postRepo.GetPostByID(-1, notification.PostID); err != nil {
+		return nil, status, err
+	}
 	if result, err = nr.dbConn.Exec(`
 	INSERT INTO notifications(receiver_id, post_id,rate_id,comment_id,created_at)
-	VALUES(?,?,?,?,?)`, notification.ReceiverID, notification.PostID,
+	VALUES(?,?,?,?,?)`, post.AuthorID, notification.PostID,
 		notification.RateID, notification.CommentID, now); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
