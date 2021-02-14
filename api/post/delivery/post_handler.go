@@ -15,22 +15,24 @@ import (
 )
 
 type PostHandler struct {
-	postUcase     post.PostUsecase
-	userUcase     user.UserUsecase
-	rateUcase     post.RateUsecase
-	categoryUcase post.CategoryUsecase
-	commentUcase  post.CommentUsecase
+	postUcase         post.PostUsecase
+	userUcase         user.UserUsecase
+	rateUcase         post.RateUsecase
+	categoryUcase     post.CategoryUsecase
+	commentUcase      post.CommentUsecase
+	notificationUcase post.NotificationUsecase
 }
 
 func NewPostHandler(postUcase post.PostUsecase, userUcase user.UserUsecase,
 	rateUcase post.RateUsecase, categoryUcase post.CategoryUsecase,
-	commentUcase post.CommentUsecase) *PostHandler {
+	commentUcase post.CommentUsecase, notificationUcase post.NotificationUsecase) *PostHandler {
 	return &PostHandler{
-		postUcase:     postUcase,
-		userUcase:     userUcase,
-		rateUcase:     rateUcase,
-		categoryUcase: categoryUcase,
-		commentUcase:  commentUcase}
+		postUcase:         postUcase,
+		userUcase:         userUcase,
+		rateUcase:         rateUcase,
+		categoryUcase:     categoryUcase,
+		commentUcase:      commentUcase,
+		notificationUcase: notificationUcase}
 }
 
 func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareManager) {
@@ -146,6 +148,7 @@ func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Reques
 		user          *models.User
 		cookie        *http.Cookie
 		isRatedBefore bool
+		rateID        int64
 	)
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
@@ -190,12 +193,20 @@ func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Reques
 			return
 		}
 	}
-	if err = ph.rateUcase.RatePost(input.ID, user.ID, input.Reaction); err != nil {
+	if rateID, err = ph.rateUcase.RatePost(input.ID, user.ID, input.Reaction); err != nil {
 		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
 	if rating.Rating, rating.UserRating, err = ph.rateUcase.GetRating(input.ID, user.ID); err != nil {
 		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	notification := models.Notification{
+		PostID: input.ID,
+		RateID: rateID,
+	}
+	if _, status, err = ph.notificationUcase.Create(&notification); err != nil {
+		response.Error(w, status, err)
 		return
 	}
 	response.Success(w, "post has been rated", http.StatusOK, rating)
