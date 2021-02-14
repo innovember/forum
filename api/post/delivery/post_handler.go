@@ -372,6 +372,15 @@ func (ph *PostHandler) CreateCommentHandlerFunc(w http.ResponseWriter, r *http.R
 		response.Error(w, status, err)
 		return
 	}
+	notification := models.Notification{
+		PostID:    newComment.PostID,
+		RateID:    0,
+		CommentID: newComment.ID,
+	}
+	if _, status, err = ph.notificationUcase.Create(&notification); err != nil {
+		response.Error(w, status, err)
+		return
+	}
 	response.Success(w, "new comment created", status, newComment)
 	return
 }
