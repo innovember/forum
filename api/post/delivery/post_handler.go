@@ -51,7 +51,7 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/comment/edit", mw.SetHeaders(mw.AuthorizedOnly(ph.EditCommentHandler)))
 	mux.HandleFunc("/api/comment/delete/", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteCommentHandler)))
 	// Notifications
-	// mux.HandleFunc("/api/notifications", mw.SetHeaders(mw.AuthorizedOnly(ph.GetAllNotificationsHandler)))
+	mux.HandleFunc("/api/notifications", mw.SetHeaders(mw.AuthorizedOnly(ph.GetAllNotificationsHandler)))
 	// mux.HandleFunc("/api/notifications/delete/", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteNotificationsHandler)))
 }
 
@@ -595,6 +595,32 @@ func (ph *PostHandler) DeleteCommentHandler(w http.ResponseWriter, r *http.Reque
 		response.Success(w, "comment has been deleted", status, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (ph *PostHandler) GetAllNotificationsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		var (
+			status        int
+			err           error
+			cookie        *http.Cookie
+			user          *models.User
+			notifications []models.Notification
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		notifications, status, err = ph.notificationUcase.GetAllNotifications(user.ID)
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		response.Success(w, "all notifications", status, notifications)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
 		return
 	}
 }
