@@ -34,6 +34,7 @@ type RateRepository interface {
 	IsRatedBefore(postID int64, userID int64, vote int) (bool, error)
 	DeleteRateFromPost(postID int64, userID int64, vote int) error
 	GetPostRatingByID(rateID int64) (postRating *models.PostRating, status int, err error)
+	GetAuthor(postRating *models.PostRating) (status int, err error)
 }
 
 type CommentRepository interface {

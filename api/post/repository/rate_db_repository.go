@@ -127,5 +127,23 @@ func (rr *RateDBRepository) GetPostRatingByID(rateID int64) (postRating *models.
 		}
 		return nil, http.StatusInternalServerError, err
 	}
+	if status, err = rr.GetAuthor(&pr); err != nil {
+		return nil, status, err
+	}
 	return &pr, http.StatusOK, nil
+}
+
+func (rr *RateDBRepository) GetAuthor(postRating *models.PostRating) (status int, err error) {
+	var (
+		user models.User
+	)
+	if err = rr.dbConn.QueryRow(`
+	SELECT id,username,email,created_at,last_active FROM users WHERE id = ?`, postRating.UserID).Scan(&user.ID, &user.Username, &user.Email, &user.CreatedAt, &user.LastActive); err != nil {
+		if err == sql.ErrNoRows {
+			return http.StatusNotFound, errors.New("cant find author of rating")
+		}
+		return http.StatusInternalServerError, err
+	}
+	postRating.Author = &user
+	return http.StatusOK, nil
 }
