@@ -149,6 +149,7 @@ func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Reques
 		cookie        *http.Cookie
 		isRatedBefore bool
 		rateID        int64
+		post          *models.Post
 	)
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
@@ -201,14 +202,20 @@ func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Reques
 		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
-	notification := models.Notification{
-		PostID:    input.ID,
-		RateID:    rateID,
-		CommentID: 0,
-	}
-	if _, status, err = ph.notificationUcase.Create(&notification); err != nil {
+	if post, status, err = ph.postUcase.GetPostByID(user.ID, input.ID); err != nil {
 		response.Error(w, status, err)
 		return
+	}
+	if user.ID != post.AuthorID {
+		notification := models.Notification{
+			PostID:    input.ID,
+			RateID:    rateID,
+			CommentID: 0,
+		}
+		if _, status, err = ph.notificationUcase.Create(&notification); err != nil {
+			response.Error(w, status, err)
+			return
+		}
 	}
 	response.Success(w, "post has been rated", http.StatusOK, rating)
 	return
@@ -351,6 +358,7 @@ func (ph *PostHandler) CreateCommentHandlerFunc(w http.ResponseWriter, r *http.R
 		err        error
 		cookie     *http.Cookie
 		user       *models.User
+		post       *models.Post
 	)
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
@@ -372,14 +380,20 @@ func (ph *PostHandler) CreateCommentHandlerFunc(w http.ResponseWriter, r *http.R
 		response.Error(w, status, err)
 		return
 	}
-	notification := models.Notification{
-		PostID:    newComment.PostID,
-		RateID:    0,
-		CommentID: newComment.ID,
-	}
-	if _, status, err = ph.notificationUcase.Create(&notification); err != nil {
+	if post, status, err = ph.postUcase.GetPostByID(user.ID, newComment.PostID); err != nil {
 		response.Error(w, status, err)
 		return
+	}
+	if user.ID != post.AuthorID {
+		notification := models.Notification{
+			PostID:    newComment.PostID,
+			RateID:    0,
+			CommentID: newComment.ID,
+		}
+		if _, status, err = ph.notificationUcase.Create(&notification); err != nil {
+			response.Error(w, status, err)
+			return
+		}
 	}
 	response.Success(w, "new comment created", status, newComment)
 	return
