@@ -80,3 +80,45 @@ func (nr *NotificationDBRepository) DeleteAllNotifications(receiverID int64) (st
 	}
 	return http.StatusNotModified, errors.New("could not delete the notifications")
 }
+
+func (nr *NotificationDBRepository) GetAllNotifications(receiverID int64) (notifications []models.Notification, status int, err error) {
+	var (
+		rows        *sql.Rows
+		postRepo    = NewPostDBRepository(nr.dbConn)
+		commentRepo = NewCommentDBRepository(nr.dbConn)
+		rateRepo    = NewRateDBRepository(nr.dbConn)
+	)
+	if rows, err = nr.dbConn.Query(`
+		SELECT *
+		FROM notifications
+		WHERE receiver_id = ?
+		ORDER BY created_at DESC
+		`, receiverID); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var n models.Notification
+		rows.Scan(&n.ID, &n.ReceiverID, &n.PostID, &n.RateID,
+			&n.CommentID, &n.CreatedAt)
+		if n.Post, status, err = postRepo.GetPostByID(receiverID, n.PostID); err != nil {
+			return nil, status, err
+		}
+		if n.RateID != 0 {
+			if n.PostRating, status, err = rateRepo.GetPostRatingByID(n.RateID); err != nil {
+				return nil, status, err
+			}
+		}
+		if n.CommentID != 0 {
+			if n.Comment, status, err = commentRepo.GetCommentByID(n.CommentID); err != nil {
+				return nil, status, err
+			}
+		}
+		notifications = append(notifications, n)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return notifications, http.StatusOK, nil
+}

@@ -25,3 +25,9 @@ func (nu *NotificationUsecase) DeleteAllNotifications(receiverID int64) (status 
 	}
 	return status, err
 }
+func (nu *NotificationUsecase) GetAllNotifications(receiverID int64) (notifications []models.Notification, status int, err error) {
+	if notifications, status, err = nu.notificationRepo.GetAllNotifications(receiverID); err != nil {
+		return nil, status, err
+	}
+	return notifications, status, nil
+}
