@@ -42,4 +42,5 @@ type CommentUsecase interface {
 type NotificationUsecase interface {
 	Create(notification *models.Notification) (newNotification *models.Notification, status int, err error)
 	DeleteAllNotifications(receiverID int64) (status int, err error)
+	GetAllNotifications(receiverID int64) (notifications []models.Notification, status int, err error)
 }

@@ -33,6 +33,7 @@ type RateRepository interface {
 	GetPostRating(postID int64, userID int64) (rating int, userRating int, err error)
 	IsRatedBefore(postID int64, userID int64, vote int) (bool, error)
 	DeleteRateFromPost(postID int64, userID int64, vote int) error
+	GetPostRatingByID(rateID int64) (postRating *models.PostRating, status int, err error)
 }
 
 type CommentRepository interface {
@@ -49,4 +50,5 @@ type CommentRepository interface {
 type NotificationRepository interface {
 	Create(notification *models.Notification) (newNotification *models.Notification, status int, err error)
 	DeleteAllNotifications(receiverID int64) (status int, err error)
+	GetAllNotifications(receiverID int64) (notifications []models.Notification, status int, err error)
 }

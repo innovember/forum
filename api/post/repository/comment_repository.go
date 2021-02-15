@@ -162,7 +162,7 @@ func (cr *CommentDBRepository) GetCommentByID(commentID int64) (comment *models.
 	var c models.Comment
 	if err = cr.dbConn.QueryRow(`
 	SELECT * FROM comments WHERE id = ?`, commentID,
-	).Scan(&c.ID, &c.PostID, &c.AuthorID, &c.Content, &c.CreatedAt, &c.EditedAt); err != nil {
+	).Scan(&c.ID, &c.AuthorID, &c.PostID, &c.Content, &c.CreatedAt, &c.EditedAt); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound, errors.New("comment not found")
 		}

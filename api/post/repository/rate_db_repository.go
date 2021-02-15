@@ -3,7 +3,9 @@ package repository
 import (
 	"database/sql"
 	"errors"
+	"github.com/innovember/forum/api/models"
 	"github.com/innovember/forum/api/post"
+	"net/http"
 )
 
 type RateDBRepository struct {
@@ -108,4 +110,22 @@ func (rr *RateDBRepository) DeleteRateFromPost(postID int64, userID int64, vote 
 		return nil
 	}
 	return errors.New("could not delete the rate")
+}
+
+func (rr *RateDBRepository) GetPostRatingByID(rateID int64) (postRating *models.PostRating, status int, err error) {
+	var (
+		pr models.PostRating
+	)
+	if err = rr.dbConn.QueryRow(`
+		SELECT *
+		FROM post_rating
+		WHERE id = ?
+		`, rateID).Scan(&pr.ID, &pr.UserID,
+		&pr.PostID, &pr.Rate); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusNotFound, errors.New("cant find rating")
+		}
+		return nil, http.StatusInternalServerError, err
+	}
+	return &pr, http.StatusOK, nil
 }
