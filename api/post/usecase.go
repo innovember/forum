@@ -45,4 +45,7 @@ type NotificationUsecase interface {
 	Create(notification *models.Notification) (newNotification *models.Notification, status int, err error)
 	DeleteAllNotifications(receiverID int64) (status int, err error)
 	GetAllNotifications(receiverID int64) (notifications []models.Notification, status int, err error)
+	DeleteNotificationsByPostID(postID int64) (status int, err error)
+	DeleteNotificationsByRateID(rateID int64) (status int, err error)
+	DeleteNotificationsByCommentID(commentID int64) (status int, err error)
 }

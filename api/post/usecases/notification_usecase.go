@@ -31,3 +31,23 @@ func (nu *NotificationUsecase) GetAllNotifications(receiverID int64) (notificati
 	}
 	return notifications, status, nil
 }
+func (nu *NotificationUsecase) DeleteNotificationsByPostID(postID int64) (status int, err error) {
+	if status, err = nu.notificationRepo.DeleteNotificationsByPostID(postID); err != nil {
+		return status, err
+	}
+	return status, err
+}
+
+func (nu *NotificationUsecase) DeleteNotificationsByRateID(rateID int64) (status int, err error) {
+	if status, err = nu.notificationRepo.DeleteNotificationsByRateID(rateID); err != nil {
+		return status, err
+	}
+	return status, err
+}
+
+func (nu *NotificationUsecase) DeleteNotificationsByCommentID(commentID int64) (status int, err error) {
+	if status, err = nu.notificationRepo.DeleteNotificationsByCommentID(commentID); err != nil {
+		return status, err
+	}
+	return status, err
+}

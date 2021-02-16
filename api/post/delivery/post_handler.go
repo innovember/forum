@@ -202,6 +202,10 @@ func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Reques
 		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
+	if status, err = ph.notificationUcase.DeleteNotificationsByRateID(rateID); status != 404 && err != nil {
+		response.Error(w, status, err)
+		return
+	}
 	if post, status, err = ph.postUcase.GetPostByID(user.ID, input.ID); err != nil {
 		response.Error(w, status, err)
 		return
@@ -527,6 +531,10 @@ func (ph *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request)
 			response.Error(w, status, err)
 			return
 		}
+		if status, err = ph.notificationUcase.DeleteNotificationsByPostID(post.ID); status != 404 && err != nil {
+			response.Error(w, status, err)
+			return
+		}
 		if status, err = ph.postUcase.Delete(post.ID); err != nil {
 			response.Error(w, status, err)
 			return
@@ -608,6 +616,10 @@ func (ph *PostHandler) DeleteCommentHandler(w http.ResponseWriter, r *http.Reque
 		}
 		if comment.AuthorID != user.ID {
 			response.Error(w, http.StatusForbidden, errors.New("can't delete another user's comment"))
+			return
+		}
+		if status, err = ph.notificationUcase.DeleteNotificationsByCommentID(comment.ID); status != 404 && err != nil {
+			response.Error(w, status, err)
 			return
 		}
 		if status, err = ph.commentUcase.Delete(comment.ID); err != nil {
