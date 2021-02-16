@@ -19,11 +19,11 @@ func (nu *NotificationUsecase) Create(notification *models.Notification) (newNot
 	}
 	return newNotification, status, err
 }
-func (nu *NotificationUsecase) DeleteAllNotifications(receiverID int64) (status int, err error) {
-	if status, err = nu.notificationRepo.DeleteAllNotifications(receiverID); err != nil {
-		return status, err
+func (nu *NotificationUsecase) DeleteAllNotifications(receiverID int64) (err error) {
+	if err = nu.notificationRepo.DeleteAllNotifications(receiverID); err != nil {
+		return err
 	}
-	return status, err
+	return err
 }
 func (nu *NotificationUsecase) GetAllNotifications(receiverID int64) (notifications []models.Notification, status int, err error) {
 	if notifications, status, err = nu.notificationRepo.GetAllNotifications(receiverID); err != nil {
@@ -31,23 +31,23 @@ func (nu *NotificationUsecase) GetAllNotifications(receiverID int64) (notificati
 	}
 	return notifications, status, nil
 }
-func (nu *NotificationUsecase) DeleteNotificationsByPostID(postID int64) (status int, err error) {
-	if status, err = nu.notificationRepo.DeleteNotificationsByPostID(postID); err != nil {
-		return status, err
+func (nu *NotificationUsecase) DeleteNotificationsByPostID(postID int64) (err error) {
+	if err = nu.notificationRepo.DeleteNotificationsByPostID(postID); err != nil {
+		return err
 	}
-	return status, err
+	return err
 }
 
-func (nu *NotificationUsecase) DeleteNotificationsByRateID(rateID int64) (status int, err error) {
-	if status, err = nu.notificationRepo.DeleteNotificationsByRateID(rateID); err != nil {
-		return status, err
+func (nu *NotificationUsecase) DeleteNotificationsByRateID(rateID int64) (err error) {
+	if err = nu.notificationRepo.DeleteNotificationsByRateID(rateID); err != nil {
+		return err
 	}
-	return status, err
+	return err
 }
 
-func (nu *NotificationUsecase) DeleteNotificationsByCommentID(commentID int64) (status int, err error) {
-	if status, err = nu.notificationRepo.DeleteNotificationsByCommentID(commentID); err != nil {
-		return status, err
+func (nu *NotificationUsecase) DeleteNotificationsByCommentID(commentID int64) (err error) {
+	if err = nu.notificationRepo.DeleteNotificationsByCommentID(commentID); err != nil {
+		return err
 	}
-	return status, err
+	return err
 }

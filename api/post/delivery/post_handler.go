@@ -202,8 +202,8 @@ func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Reques
 		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
-	if status, err = ph.notificationUcase.DeleteNotificationsByRateID(rateID); status != 404 && err != nil {
-		response.Error(w, status, err)
+	if err = ph.notificationUcase.DeleteNotificationsByRateID(rateID); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
 	if post, status, err = ph.postUcase.GetPostByID(user.ID, input.ID); err != nil {
@@ -523,16 +523,16 @@ func (ph *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request)
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		if status, err = ph.rateUcase.DeleteRatesByPostID(post.ID); status != 404 && err != nil {
-			response.Error(w, status, err)
+		if err = ph.rateUcase.DeleteRatesByPostID(post.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		if status, err = ph.commentUcase.DeleteCommentByPostID(post.ID); status != 404 && err != nil {
-			response.Error(w, status, err)
+		if err = ph.commentUcase.DeleteCommentByPostID(post.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		if status, err = ph.notificationUcase.DeleteNotificationsByPostID(post.ID); status != 404 && err != nil {
-			response.Error(w, status, err)
+		if err = ph.notificationUcase.DeleteNotificationsByPostID(post.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
 		if status, err = ph.postUcase.Delete(post.ID); err != nil {
@@ -618,12 +618,12 @@ func (ph *PostHandler) DeleteCommentHandler(w http.ResponseWriter, r *http.Reque
 			response.Error(w, http.StatusForbidden, errors.New("can't delete another user's comment"))
 			return
 		}
-		if status, err = ph.notificationUcase.DeleteNotificationsByCommentID(comment.ID); status != 404 && err != nil {
-			response.Error(w, status, err)
+		if err = ph.notificationUcase.DeleteNotificationsByCommentID(comment.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		if status, err = ph.commentUcase.Delete(comment.ID); err != nil {
-			response.Error(w, status, err)
+		if err = ph.commentUcase.Delete(comment.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
 		response.Success(w, "comment has been deleted", status, nil)
@@ -673,8 +673,8 @@ func (ph *PostHandler) DeleteNotificationsHandler(w http.ResponseWriter, r *http
 			response.Error(w, status, err)
 			return
 		}
-		if status, err = ph.notificationUcase.DeleteAllNotifications(user.ID); err != nil {
-			response.Error(w, status, err)
+		if err = ph.notificationUcase.DeleteAllNotifications(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
 		response.Success(w, "notifications has been deleted", status, nil)

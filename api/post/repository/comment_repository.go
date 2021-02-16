@@ -175,68 +175,44 @@ func (cr *CommentDBRepository) GetCommentByID(commentID int64) (comment *models.
 	return &c, http.StatusOK, nil
 }
 
-func (cr *CommentDBRepository) Delete(commentID int64) (status int, err error) {
+func (cr *CommentDBRepository) Delete(commentID int64) (err error) {
 	var (
-		ctx          context.Context
-		tx           *sql.Tx
-		result       sql.Result
-		rowsAffected int64
+		ctx context.Context
+		tx  *sql.Tx
 	)
 	ctx = context.Background()
 	if tx, err = cr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
-		return http.StatusInternalServerError, err
+		return err
 	}
-	if result, err = tx.Exec(`DELETE FROM comments
+	if _, err = tx.Exec(`DELETE FROM comments
 								WHERE id = ?`,
 		commentID); err != nil {
 		tx.Rollback()
-		if err == sql.ErrNoRows {
-			return http.StatusNotFound, errors.New("comment not found")
-		}
-		return http.StatusInternalServerError, err
+		return err
 	}
-	if rowsAffected, err = result.RowsAffected(); err != nil {
-		tx.Rollback()
-		return http.StatusInternalServerError, nil
+	if err = tx.Commit(); err != nil {
+		return err
 	}
-	if rowsAffected > 0 {
-		if err := tx.Commit(); err != nil {
-			return http.StatusInternalServerError, err
-		}
-		return http.StatusOK, nil
-	}
-	return http.StatusNotModified, errors.New("could not delete the comment")
+	return nil
 }
 
-func (cr *CommentDBRepository) DeleteCommentByPostID(postID int64) (status int, err error) {
+func (cr *CommentDBRepository) DeleteCommentByPostID(postID int64) (err error) {
 	var (
-		ctx          context.Context
-		tx           *sql.Tx
-		result       sql.Result
-		rowsAffected int64
+		ctx context.Context
+		tx  *sql.Tx
 	)
 	ctx = context.Background()
 	if tx, err = cr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
-		return http.StatusInternalServerError, err
+		return err
 	}
-	if result, err = tx.Exec(`DELETE FROM comments
+	if _, err = tx.Exec(`DELETE FROM comments
 								WHERE post_id = ?`,
 		postID); err != nil {
 		tx.Rollback()
-		if err == sql.ErrNoRows {
-			return http.StatusNotFound, errors.New("comments not found")
-		}
-		return http.StatusInternalServerError, err
+		return err
 	}
-	if rowsAffected, err = result.RowsAffected(); err != nil {
-		tx.Rollback()
-		return http.StatusInternalServerError, nil
+	if err = tx.Commit(); err != nil {
+		return err
 	}
-	if rowsAffected > 0 {
-		if err := tx.Commit(); err != nil {
-			return http.StatusInternalServerError, err
-		}
-		return http.StatusOK, nil
-	}
-	return http.StatusNotModified, errors.New("could not delete the comment")
+	return nil
 }

@@ -45,9 +45,9 @@ func (ru *RateUsecase) DeleteRateFromPost(postID int64, userID int64, vote int) 
 	return nil
 }
 
-func (ru *RateUsecase) DeleteRatesByPostID(postID int64) (status int, err error) {
-	if status, err := ru.rateRepo.DeleteRatesByPostID(postID); err != nil {
-		return status, err
+func (ru *RateUsecase) DeleteRatesByPostID(postID int64) (err error) {
+	if err := ru.rateRepo.DeleteRatesByPostID(postID); err != nil {
+		return err
 	}
-	return status, nil
+	return nil
 }

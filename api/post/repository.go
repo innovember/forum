@@ -35,7 +35,7 @@ type RateRepository interface {
 	DeleteRateFromPost(postID int64, userID int64, vote int) error
 	GetPostRatingByID(rateID int64) (postRating *models.PostRating, status int, err error)
 	GetAuthor(postRating *models.PostRating) (status int, err error)
-	DeleteRatesByPostID(postID int64) (status int, err error)
+	DeleteRatesByPostID(postID int64) (err error)
 }
 
 type CommentRepository interface {
@@ -46,15 +46,15 @@ type CommentRepository interface {
 	GetCommentsNumberByPostID(postID int64) (commentsNumber int, err error)
 	Update(comment *models.Comment) (editedComment *models.Comment, status int, err error)
 	GetCommentByID(commentID int64) (comment *models.Comment, status int, err error)
-	Delete(commentID int64) (status int, err error)
-	DeleteCommentByPostID(postID int64) (status int, err error)
+	Delete(commentID int64) (err error)
+	DeleteCommentByPostID(postID int64) (err error)
 }
 
 type NotificationRepository interface {
 	Create(notification *models.Notification) (newNotification *models.Notification, status int, err error)
-	DeleteAllNotifications(receiverID int64) (status int, err error)
+	DeleteAllNotifications(receiverID int64) (err error)
 	GetAllNotifications(receiverID int64) (notifications []models.Notification, status int, err error)
-	DeleteNotificationsByPostID(postID int64) (status int, err error)
-	DeleteNotificationsByRateID(rateID int64) (status int, err error)
-	DeleteNotificationsByCommentID(commentID int64) (status int, err error)
+	DeleteNotificationsByPostID(postID int64) (err error)
+	DeleteNotificationsByRateID(rateID int64) (err error)
+	DeleteNotificationsByCommentID(commentID int64) (err error)
 }

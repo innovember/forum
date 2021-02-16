@@ -49,37 +49,25 @@ func (nr *NotificationDBRepository) Create(notification *models.Notification) (*
 	return nil, http.StatusBadRequest, errors.New("notification hasn't been created")
 }
 
-func (nr *NotificationDBRepository) DeleteAllNotifications(receiverID int64) (status int, err error) {
+func (nr *NotificationDBRepository) DeleteAllNotifications(receiverID int64) (err error) {
 	var (
-		ctx          context.Context
-		tx           *sql.Tx
-		result       sql.Result
-		rowsAffected int64
+		ctx context.Context
+		tx  *sql.Tx
 	)
 	ctx = context.Background()
 	if tx, err = nr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
-		return http.StatusInternalServerError, err
+		return err
 	}
-	if result, err = tx.Exec(`DELETE FROM notifications
+	if _, err = tx.Exec(`DELETE FROM notifications
 								WHERE receiver_id = ?`,
 		receiverID); err != nil {
 		tx.Rollback()
-		if err == sql.ErrNoRows {
-			return http.StatusNotFound, errors.New("notifications not found")
-		}
-		return http.StatusInternalServerError, err
+		return err
 	}
-	if rowsAffected, err = result.RowsAffected(); err != nil {
-		tx.Rollback()
-		return http.StatusInternalServerError, nil
+	if err = tx.Commit(); err != nil {
+		return err
 	}
-	if rowsAffected > 0 {
-		if err := tx.Commit(); err != nil {
-			return http.StatusInternalServerError, err
-		}
-		return http.StatusOK, nil
-	}
-	return http.StatusNotModified, errors.New("could not delete the notifications")
+	return nil
 }
 
 func (nr *NotificationDBRepository) GetAllNotifications(receiverID int64) (notifications []models.Notification, status int, err error) {
@@ -124,101 +112,65 @@ func (nr *NotificationDBRepository) GetAllNotifications(receiverID int64) (notif
 	return notifications, http.StatusOK, nil
 }
 
-func (nr *NotificationDBRepository) DeleteNotificationsByPostID(postID int64) (status int, err error) {
+func (nr *NotificationDBRepository) DeleteNotificationsByPostID(postID int64) (err error) {
 	var (
-		ctx          context.Context
-		tx           *sql.Tx
-		result       sql.Result
-		rowsAffected int64
+		ctx context.Context
+		tx  *sql.Tx
 	)
 	ctx = context.Background()
 	if tx, err = nr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
-		return http.StatusInternalServerError, err
+		return err
 	}
-	if result, err = tx.Exec(`DELETE FROM notifications
+	if _, err = tx.Exec(`DELETE FROM notifications
 								WHERE post_id = ?`,
 		postID); err != nil {
 		tx.Rollback()
-		if err == sql.ErrNoRows {
-			return http.StatusNotFound, errors.New("notifications not found")
-		}
-		return http.StatusInternalServerError, err
+		return err
 	}
-	if rowsAffected, err = result.RowsAffected(); err != nil {
-		tx.Rollback()
-		return http.StatusInternalServerError, nil
+	if err = tx.Commit(); err != nil {
+		return err
 	}
-	if rowsAffected > 0 {
-		if err := tx.Commit(); err != nil {
-			return http.StatusInternalServerError, err
-		}
-		return http.StatusOK, nil
-	}
-	return http.StatusNotModified, errors.New("could not delete the notifications")
+	return nil
 }
 
-func (nr *NotificationDBRepository) DeleteNotificationsByRateID(rateID int64) (status int, err error) {
+func (nr *NotificationDBRepository) DeleteNotificationsByRateID(rateID int64) (err error) {
 	var (
-		ctx          context.Context
-		tx           *sql.Tx
-		result       sql.Result
-		rowsAffected int64
+		ctx context.Context
+		tx  *sql.Tx
 	)
 	ctx = context.Background()
 	if tx, err = nr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
-		return http.StatusInternalServerError, err
+		return err
 	}
-	if result, err = tx.Exec(`DELETE FROM notifications
+	if _, err = tx.Exec(`DELETE FROM notifications
 								WHERE rate_id = ?`,
 		rateID); err != nil {
 		tx.Rollback()
-		if err == sql.ErrNoRows {
-			return http.StatusNotFound, errors.New("notifications not found")
-		}
-		return http.StatusInternalServerError, err
+		return err
 	}
-	if rowsAffected, err = result.RowsAffected(); err != nil {
-		tx.Rollback()
-		return http.StatusInternalServerError, nil
+	if err = tx.Commit(); err != nil {
+		return err
 	}
-	if rowsAffected > 0 {
-		if err := tx.Commit(); err != nil {
-			return http.StatusInternalServerError, err
-		}
-		return http.StatusOK, nil
-	}
-	return http.StatusNotModified, errors.New("could not delete the notifications")
+	return nil
 }
 
-func (nr *NotificationDBRepository) DeleteNotificationsByCommentID(commentID int64) (status int, err error) {
+func (nr *NotificationDBRepository) DeleteNotificationsByCommentID(commentID int64) (err error) {
 	var (
-		ctx          context.Context
-		tx           *sql.Tx
-		result       sql.Result
-		rowsAffected int64
+		ctx context.Context
+		tx  *sql.Tx
 	)
 	ctx = context.Background()
 	if tx, err = nr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
-		return http.StatusInternalServerError, err
+		return err
 	}
-	if result, err = tx.Exec(`DELETE FROM notifications
+	if _, err = tx.Exec(`DELETE FROM notifications
 								WHERE comment_id = ?`,
 		commentID); err != nil {
 		tx.Rollback()
-		if err == sql.ErrNoRows {
-			return http.StatusNotFound, errors.New("notifications not found")
-		}
-		return http.StatusInternalServerError, err
+		return err
 	}
-	if rowsAffected, err = result.RowsAffected(); err != nil {
-		tx.Rollback()
-		return http.StatusInternalServerError, nil
+	if err = tx.Commit(); err != nil {
+		return err
 	}
-	if rowsAffected > 0 {
-		if err := tx.Commit(); err != nil {
-			return http.StatusInternalServerError, err
-		}
-		return http.StatusOK, nil
-	}
-	return http.StatusNotModified, errors.New("could not delete the notifications")
+	return nil
 }

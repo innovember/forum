@@ -86,31 +86,26 @@ func (rr *RateDBRepository) IsRatedBefore(postID int64, userID int64, vote int) 
 	return false, nil
 }
 
-func (rr *RateDBRepository) DeleteRateFromPost(postID int64, userID int64, vote int) error {
+func (rr *RateDBRepository) DeleteRateFromPost(postID int64, userID int64, vote int) (err error) {
 	var (
-		result       sql.Result
-		rowsAffected int64
-		err          error
+		ctx context.Context
+		tx  *sql.Tx
 	)
-	if result, err = rr.dbConn.Exec(
-		`DELETE FROM post_rating
-		WHERE post_id = ?
-		AND user_id = ?
-		AND rate = ?`, postID, userID, vote,
-	); err != nil {
-		if err != sql.ErrNoRows {
-			return err
-		}
-		return errors.New("post with such rate not found")
-	}
-
-	if rowsAffected, err = result.RowsAffected(); err != nil {
+	ctx = context.Background()
+	if tx, err = rr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
 		return err
 	}
-	if rowsAffected > 0 {
-		return nil
+	if _, err = tx.Exec(`DELETE FROM post_rating
+		WHERE post_id = ?
+		AND user_id = ?
+		AND rate = ?`, postID, userID, vote); err != nil {
+		tx.Rollback()
+		return err
 	}
-	return errors.New("could not delete the rate")
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (rr *RateDBRepository) GetPostRatingByID(rateID int64) (postRating *models.PostRating, status int, err error) {
@@ -149,35 +144,23 @@ func (rr *RateDBRepository) GetAuthor(postRating *models.PostRating) (status int
 	return http.StatusOK, nil
 }
 
-func (rr *RateDBRepository) DeleteRatesByPostID(postID int64) (status int, err error) {
+func (rr *RateDBRepository) DeleteRatesByPostID(postID int64) (err error) {
 	var (
-		ctx          context.Context
-		tx           *sql.Tx
-		result       sql.Result
-		rowsAffected int64
+		ctx context.Context
+		tx  *sql.Tx
 	)
 	ctx = context.Background()
 	if tx, err = rr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
-		return http.StatusInternalServerError, err
+		return err
 	}
-	if result, err = tx.Exec(`DELETE FROM post_rating
+	if _, err = tx.Exec(`DELETE FROM post_rating
 								WHERE post_id = ?`,
 		postID); err != nil {
 		tx.Rollback()
-		if err == sql.ErrNoRows {
-			return http.StatusNotFound, errors.New("rates not found")
-		}
-		return http.StatusInternalServerError, err
+		return err
 	}
-	if rowsAffected, err = result.RowsAffected(); err != nil {
-		tx.Rollback()
-		return http.StatusInternalServerError, nil
+	if err = tx.Commit(); err != nil {
+		return err
 	}
-	if rowsAffected > 0 {
-		if err := tx.Commit(); err != nil {
-			return http.StatusInternalServerError, err
-		}
-		return http.StatusOK, nil
-	}
-	return http.StatusNotModified, errors.New("could not delete the rates")
+	return nil
 }
