@@ -63,13 +63,14 @@ func (nr *NotificationDBRepository) DeleteAllNotifications(receiverID int64) (st
 	if result, err = tx.Exec(`DELETE FROM notifications
 								WHERE receiver_id = ?`,
 		receiverID); err != nil {
+		tx.Rollback()
 		if err == sql.ErrNoRows {
 			return http.StatusNotFound, errors.New("notifications not found")
 		}
-		tx.Rollback()
 		return http.StatusInternalServerError, err
 	}
 	if rowsAffected, err = result.RowsAffected(); err != nil {
+		tx.Rollback()
 		return http.StatusInternalServerError, nil
 	}
 	if rowsAffected > 0 {
@@ -137,13 +138,14 @@ func (nr *NotificationDBRepository) DeleteNotificationsByPostID(postID int64) (s
 	if result, err = tx.Exec(`DELETE FROM notifications
 								WHERE post_id = ?`,
 		postID); err != nil {
+		tx.Rollback()
 		if err == sql.ErrNoRows {
 			return http.StatusNotFound, errors.New("notifications not found")
 		}
-		tx.Rollback()
 		return http.StatusInternalServerError, err
 	}
 	if rowsAffected, err = result.RowsAffected(); err != nil {
+		tx.Rollback()
 		return http.StatusInternalServerError, nil
 	}
 	if rowsAffected > 0 {
@@ -169,13 +171,14 @@ func (nr *NotificationDBRepository) DeleteNotificationsByRateID(rateID int64) (s
 	if result, err = tx.Exec(`DELETE FROM notifications
 								WHERE rate_id = ?`,
 		rateID); err != nil {
+		tx.Rollback()
 		if err == sql.ErrNoRows {
 			return http.StatusNotFound, errors.New("notifications not found")
 		}
-		tx.Rollback()
 		return http.StatusInternalServerError, err
 	}
 	if rowsAffected, err = result.RowsAffected(); err != nil {
+		tx.Rollback()
 		return http.StatusInternalServerError, nil
 	}
 	if rowsAffected > 0 {
@@ -201,13 +204,14 @@ func (nr *NotificationDBRepository) DeleteNotificationsByCommentID(commentID int
 	if result, err = tx.Exec(`DELETE FROM notifications
 								WHERE comment_id = ?`,
 		commentID); err != nil {
+		tx.Rollback()
 		if err == sql.ErrNoRows {
 			return http.StatusNotFound, errors.New("notifications not found")
 		}
-		tx.Rollback()
 		return http.StatusInternalServerError, err
 	}
 	if rowsAffected, err = result.RowsAffected(); err != nil {
+		tx.Rollback()
 		return http.StatusInternalServerError, nil
 	}
 	if rowsAffected > 0 {

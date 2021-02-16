@@ -409,13 +409,14 @@ func (pr *PostDBRepository) Update(post *models.Post) (editedPost *models.Post, 
 							WHERE id = ?`,
 		post.Title, post.Content, post.EditedAt,
 		post.ID); err != nil {
+		tx.Rollback()
 		if err == sql.ErrNoRows {
 			return nil, http.StatusInternalServerError, errors.New("post not found")
 		}
-		tx.Rollback()
 		return nil, http.StatusInternalServerError, err
 	}
 	if rowsAffected, err = result.RowsAffected(); err != nil {
+		tx.Rollback()
 		return nil, http.StatusInternalServerError, err
 	}
 	if rowsAffected > 0 {
@@ -441,13 +442,14 @@ func (pr *PostDBRepository) Delete(postID int64) (status int, err error) {
 	if result, err = tx.Exec(`DELETE FROM posts
 								WHERE id = ?`,
 		postID); err != nil {
+		tx.Rollback()
 		if err == sql.ErrNoRows {
 			return http.StatusNotFound, errors.New("post not found")
 		}
-		tx.Rollback()
 		return http.StatusInternalServerError, err
 	}
 	if rowsAffected, err = result.RowsAffected(); err != nil {
+		tx.Rollback()
 		return http.StatusInternalServerError, nil
 	}
 	if rowsAffected > 0 {

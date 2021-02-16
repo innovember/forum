@@ -140,13 +140,14 @@ func (cr *CommentDBRepository) Update(comment *models.Comment) (editedComment *m
 							WHERE post_id = ?
 							and id = ?`,
 		comment.Content, comment.EditedAt, comment.PostID, comment.ID); err != nil {
+		tx.Rollback()
 		if err == sql.ErrNoRows {
 			return nil, http.StatusInternalServerError, errors.New("comment not found")
 		}
-		tx.Rollback()
 		return nil, http.StatusInternalServerError, err
 	}
 	if rowsAffected, err = result.RowsAffected(); err != nil {
+		tx.Rollback()
 		return nil, http.StatusInternalServerError, err
 	}
 	if rowsAffected > 0 {
@@ -188,13 +189,14 @@ func (cr *CommentDBRepository) Delete(commentID int64) (status int, err error) {
 	if result, err = tx.Exec(`DELETE FROM comments
 								WHERE id = ?`,
 		commentID); err != nil {
+		tx.Rollback()
 		if err == sql.ErrNoRows {
 			return http.StatusNotFound, errors.New("comment not found")
 		}
-		tx.Rollback()
 		return http.StatusInternalServerError, err
 	}
 	if rowsAffected, err = result.RowsAffected(); err != nil {
+		tx.Rollback()
 		return http.StatusInternalServerError, nil
 	}
 	if rowsAffected > 0 {
@@ -220,13 +222,14 @@ func (cr *CommentDBRepository) DeleteCommentByPostID(postID int64) (status int, 
 	if result, err = tx.Exec(`DELETE FROM comments
 								WHERE post_id = ?`,
 		postID); err != nil {
+		tx.Rollback()
 		if err == sql.ErrNoRows {
 			return http.StatusNotFound, errors.New("comments not found")
 		}
-		tx.Rollback()
 		return http.StatusInternalServerError, err
 	}
 	if rowsAffected, err = result.RowsAffected(); err != nil {
+		tx.Rollback()
 		return http.StatusInternalServerError, nil
 	}
 	if rowsAffected > 0 {

@@ -163,13 +163,14 @@ func (rr *RateDBRepository) DeleteRatesByPostID(postID int64) (status int, err e
 	if result, err = tx.Exec(`DELETE FROM post_rating
 								WHERE post_id = ?`,
 		postID); err != nil {
+		tx.Rollback()
 		if err == sql.ErrNoRows {
 			return http.StatusNotFound, errors.New("rates not found")
 		}
-		tx.Rollback()
 		return http.StatusInternalServerError, err
 	}
 	if rowsAffected, err = result.RowsAffected(); err != nil {
+		tx.Rollback()
 		return http.StatusInternalServerError, nil
 	}
 	if rowsAffected > 0 {
