@@ -519,6 +519,14 @@ func (ph *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request)
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
+		if status, err = ph.rateUcase.DeleteRatesByPostID(post.ID); status != 404 && err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if status, err = ph.commentUcase.DeleteCommentByPostID(post.ID); status != 404 && err != nil {
+			response.Error(w, status, err)
+			return
+		}
 		if status, err = ph.postUcase.Delete(post.ID); err != nil {
 			response.Error(w, status, err)
 			return

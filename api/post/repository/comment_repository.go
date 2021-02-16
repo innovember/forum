@@ -205,3 +205,35 @@ func (cr *CommentDBRepository) Delete(commentID int64) (status int, err error) {
 	}
 	return http.StatusNotModified, errors.New("could not delete the comment")
 }
+
+func (cr *CommentDBRepository) DeleteCommentByPostID(postID int64) (status int, err error) {
+	var (
+		ctx          context.Context
+		tx           *sql.Tx
+		result       sql.Result
+		rowsAffected int64
+	)
+	ctx = context.Background()
+	if tx, err = cr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return http.StatusInternalServerError, err
+	}
+	if result, err = tx.Exec(`DELETE FROM comments
+								WHERE post_id = ?`,
+		postID); err != nil {
+		if err == sql.ErrNoRows {
+			return http.StatusNotFound, errors.New("comments not found")
+		}
+		tx.Rollback()
+		return http.StatusInternalServerError, err
+	}
+	if rowsAffected, err = result.RowsAffected(); err != nil {
+		return http.StatusInternalServerError, nil
+	}
+	if rowsAffected > 0 {
+		if err := tx.Commit(); err != nil {
+			return http.StatusInternalServerError, err
+		}
+		return http.StatusOK, nil
+	}
+	return http.StatusNotModified, errors.New("could not delete the comment")
+}

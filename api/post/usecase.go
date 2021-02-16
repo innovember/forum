@@ -28,6 +28,7 @@ type RateUsecase interface {
 	GetRating(postID int64, userID int64) (rating int, userRating int, err error)
 	IsRatedBefore(postID int64, userID int64, vote int) (bool, error)
 	DeleteRateFromPost(postID int64, userID int64, vote int) error
+	DeleteRatesByPostID(postID int64) (status int, err error)
 }
 
 type CommentUsecase interface {
@@ -37,6 +38,7 @@ type CommentUsecase interface {
 	Update(comment *models.Comment) (editedComment *models.Comment, status int, err error)
 	GetCommentByID(commentID int64) (comment *models.Comment, status int, err error)
 	Delete(commentID int64) (status int, err error)
+	DeleteCommentByPostID(postID int64) (status int, err error)
 }
 
 type NotificationUsecase interface {

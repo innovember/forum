@@ -52,3 +52,10 @@ func (cu *CommentUsecase) Delete(commentID int64) (status int, err error) {
 	}
 	return status, err
 }
+
+func (cu *CommentUsecase) DeleteCommentByPostID(postID int64) (status int, err error) {
+	if status, err = cu.commentRepo.DeleteCommentByPostID(postID); err != nil {
+		return status, err
+	}
+	return status, err
+}
