@@ -4,6 +4,7 @@ import (
 	config "github.com/innovember/forum/api/config"
 	db "github.com/innovember/forum/api/db"
 	"github.com/innovember/forum/api/middleware"
+	session "github.com/innovember/forum/api/services/session"
 
 	userHandler "github.com/innovember/forum/api/user/delivery"
 	userRepo "github.com/innovember/forum/api/user/repository"
@@ -27,6 +28,10 @@ func Run() {
 	if err = db.CheckDB(dbConn, config.DBPath+"/"+config.DBSchema); err != nil {
 		log.Fatal("DB schema", err)
 	}
+	if err = session.ResetAll(dbConn); err != nil {
+		log.Fatal(err)
+	}
+	session.Init(dbConn)
 	//Repository
 	userRepository := userRepo.NewUserDBRepository(dbConn)
 	postRepository := postRepo.NewPostDBRepository(dbConn)
