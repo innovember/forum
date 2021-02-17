@@ -88,10 +88,9 @@ func (rr *RateDBRepository) IsRatedBefore(postID int64, userID int64, vote int) 
 
 func (rr *RateDBRepository) DeleteRateFromPost(postID int64, userID int64, vote int) (err error) {
 	var (
-		ctx               context.Context
-		tx                *sql.Tx
-		rateID            int64
-		notificationsRepo = NewNotificationDBRepository(rr.dbConn)
+		ctx    context.Context
+		tx     *sql.Tx
+		rateID int64
 	)
 	ctx = context.Background()
 	if tx, err = rr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
@@ -105,7 +104,8 @@ func (rr *RateDBRepository) DeleteRateFromPost(postID int64, userID int64, vote 
 		tx.Rollback()
 		return err
 	}
-	if err = notificationsRepo.DeleteNotificationsByRateID(rateID); err != nil {
+	if _, err = tx.Exec(`DELETE FROM notifications
+    WHERE rate_id = ?`, rateID); err != nil {
 		tx.Rollback()
 		return err
 	}
