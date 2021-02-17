@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS users (
 	email TEXT UNIQUE,
 	created_at INTEGER,
 	last_active INTEGER,
-	session_id TEXT
+	session_id TEXT,
+	expires_at INTEGER DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS users_username ON users (username);

@@ -45,8 +45,8 @@ func (uu *UserUsecase) FindUserByUsername(username string) (user *models.User, s
 	return user, status, nil
 }
 
-func (uu *UserUsecase) UpdateSession(userID int64, sessionValue string) (err error) {
-	if err = uu.userRepo.UpdateSession(userID, sessionValue); err != nil {
+func (uu *UserUsecase) UpdateSession(userID int64, sessionValue string, expiresAt int64) (err error) {
+	if err = uu.userRepo.UpdateSession(userID, sessionValue, expiresAt); err != nil {
 		return err
 	}
 	return nil

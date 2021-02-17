@@ -11,6 +11,7 @@ import (
 	"github.com/innovember/forum/api/user"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type UserHandler struct {
@@ -100,6 +101,7 @@ func (uh *UserHandler) SignInFunc(w http.ResponseWriter, r *http.Request) {
 		newUUID      string
 		err          error
 		status       int
+		expiresAt    = time.Now().Add(config.SessionExpiration).Unix()
 	)
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
@@ -122,7 +124,7 @@ func (uh *UserHandler) SignInFunc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cookie, newUUID = security.GenerateCookie(r.Cookie(config.SessionCookieName))
-	if err = uh.userUcase.UpdateSession(user.ID, newUUID); err != nil {
+	if err = uh.userUcase.UpdateSession(user.ID, newUUID, expiresAt); err != nil {
 		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -140,10 +142,11 @@ func (uh *UserHandler) SignOut(w http.ResponseWriter, r *http.Request) {
 }
 func (uh *UserHandler) SignOutFunc(w http.ResponseWriter, r *http.Request) {
 	var (
-		user   *models.User
-		err    error
-		status int
-		cookie *http.Cookie
+		user      *models.User
+		err       error
+		status    int
+		cookie    *http.Cookie
+		expiresAt = time.Now().Add(config.SessionExpiration).Unix()
 	)
 	if cookie, err = r.Cookie(config.SessionCookieName); err != nil {
 		response.Error(w, http.StatusUnauthorized, err)
@@ -152,7 +155,7 @@ func (uh *UserHandler) SignOutFunc(w http.ResponseWriter, r *http.Request) {
 	if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
 		response.Error(w, status, err)
 	}
-	if err = uh.userUcase.UpdateSession(user.ID, ""); err != nil {
+	if err = uh.userUcase.UpdateSession(user.ID, "", expiresAt); err != nil {
 		response.Error(w, http.StatusInternalServerError, err)
 	}
 	cookie = &http.Cookie{

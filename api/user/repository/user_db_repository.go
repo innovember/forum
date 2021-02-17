@@ -108,14 +108,18 @@ func (ur *UserDBRepository) FindUserByUsername(username string) (*models.User, i
 	return &user, http.StatusOK, nil
 }
 
-func (ur *UserDBRepository) UpdateSession(userID int64, sessionValue string) (err error) {
+func (ur *UserDBRepository) UpdateSession(userID int64, sessionValue string, expiresAt int64) (err error) {
 	var (
 		result       sql.Result
 		rowsAffected int64
 		now          int64 = time.Now().Unix()
 	)
 	if result, err = ur.dbConn.Exec(`
-	UPDATE users SET session_id = ?,last_active = ? WHERE id = ?`, sessionValue, now, userID); err != nil {
+	UPDATE users
+	SET session_id = ?,
+	last_active = ?,
+	expires_at = ?
+	WHERE id = ?`, sessionValue, now, expiresAt, userID); err != nil {
 		return err
 	}
 	if rowsAffected, err = result.RowsAffected(); err != nil {
