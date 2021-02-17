@@ -97,6 +97,10 @@ func (ph *PostHandler) CreatePostHandlerFunc(w http.ResponseWriter, r *http.Requ
 		response.Error(w, status, err)
 		return
 	}
+	if err = ph.userUcase.UpdateActivity(user.ID); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
 	response.Success(w, "new post created", status, newPost)
 	return
 }
@@ -220,6 +224,10 @@ func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Reques
 			response.Error(w, status, err)
 			return
 		}
+	}
+	if err = ph.userUcase.UpdateActivity(user.ID); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
 	}
 	response.Success(w, "post has been rated", http.StatusOK, rating)
 	return
@@ -399,6 +407,10 @@ func (ph *PostHandler) CreateCommentHandlerFunc(w http.ResponseWriter, r *http.R
 			return
 		}
 	}
+	if err = ph.userUcase.UpdateActivity(user.ID); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
 	response.Success(w, "new comment created", status, newComment)
 	return
 }
@@ -483,6 +495,10 @@ func (ph *PostHandler) EditPostHandler(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, status, err)
 			return
 		}
+		if err = ph.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
 		response.Success(w, "post has been edited", status, editedPost)
 	} else {
 		http.Error(w, "Only PUT method allowed, return to main page", 405)
@@ -539,6 +555,10 @@ func (ph *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request)
 			response.Error(w, status, err)
 			return
 		}
+		if err = ph.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
 		response.Success(w, "post has been deleted", status, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
@@ -583,6 +603,10 @@ func (ph *PostHandler) EditCommentHandler(w http.ResponseWriter, r *http.Request
 			response.Error(w, status, err)
 			return
 		}
+		if err = ph.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
 		response.Success(w, "comment has been edited", status, editedComment)
 	} else {
 		http.Error(w, "Only PUT method allowed, return to main page", 405)
@@ -623,6 +647,10 @@ func (ph *PostHandler) DeleteCommentHandler(w http.ResponseWriter, r *http.Reque
 			return
 		}
 		if err = ph.commentUcase.Delete(comment.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = ph.userUcase.UpdateActivity(user.ID); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -674,6 +702,10 @@ func (ph *PostHandler) DeleteNotificationsHandler(w http.ResponseWriter, r *http
 			return
 		}
 		if err = ph.notificationUcase.DeleteAllNotifications(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = ph.userUcase.UpdateActivity(user.ID); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}

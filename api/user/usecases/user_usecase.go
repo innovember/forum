@@ -70,3 +70,10 @@ func (uu *UserUsecase) GetUserByID(userID int64) (user *models.User, err error) 
 	}
 	return user, nil
 }
+
+func (uu *UserUsecase) UpdateActivity(userID int64) (err error) {
+	if err = uu.userRepo.UpdateActivity(userID); err != nil {
+		return err
+	}
+	return nil
+}

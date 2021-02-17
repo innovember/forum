@@ -14,4 +14,5 @@ type UserRepository interface {
 	UpdateSession(userID int64, sessionValue string) (err error)
 	ValidateSession(sessionValue string) (user *models.User, status int, err error)
 	CheckSessionByUsername(username string) (status int, err error)
+	UpdateActivity(userID int64) (err error)
 }

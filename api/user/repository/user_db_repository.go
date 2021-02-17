@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"github.com/innovember/forum/api/models"
@@ -171,4 +172,26 @@ func (ur *UserDBRepository) GetUserByID(userID int64) (*models.User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (ur *UserDBRepository) UpdateActivity(userID int64) (err error) {
+	var (
+		ctx context.Context
+		tx  *sql.Tx
+		now int64 = time.Now().Unix()
+	)
+	ctx = context.Background()
+	if tx, err = ur.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(`UPDATE users
+						 SET last_active = ?
+						 WHERE id = ?`, now, userID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
 }
