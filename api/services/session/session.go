@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"log"
 	// "github.com/innovember/forum/api/config"
-	userRepo "github.com/innovember/forum/api/user/repository"
 	"time"
 )
 
@@ -43,14 +42,11 @@ func ResetAll(dbConn *sql.DB) (err error) {
 
 func CheckSessionExpiration(dbConn *sql.DB) {
 	var (
-		ctx            context.Context
-		tx             *sql.Tx
-		rows           *sql.Rows
-		err            error
-		userID         int64
-		sessionValue   string
-		expiresAt      int64
-		userRepository = userRepo.NewUserDBRepository(dbConn)
+		ctx    context.Context
+		tx     *sql.Tx
+		rows   *sql.Rows
+		err    error
+		userID int64
 	)
 	for {
 		time.Sleep(time.Minute * 5)
@@ -60,7 +56,7 @@ func CheckSessionExpiration(dbConn *sql.DB) {
 			log.Println(err)
 			return
 		}
-		if rows, err = tx.Query(`SELECT id,session_id, expires_at
+		if rows, err = tx.Query(`SELECT id
 								FROM users
 								WHERE expires_at < ?`,
 			now); err != nil {
@@ -68,14 +64,23 @@ func CheckSessionExpiration(dbConn *sql.DB) {
 			log.Println(err)
 			return
 		}
-		defer rows.Close()
 		for rows.Next() {
-			rows.Scan(&userID, &sessionValue, &expiresAt)
-			if err = userRepository.UpdateSession(userID, sessionValue, expiresAt); err != nil {
+			rows.Scan(&userID)
+			if _, err = tx.Exec(`
+							UPDATE users
+							SET session_id = ?,
+							expires_at = ?
+							WHERE id = ?`, "", 0, userID); err != nil {
 				log.Println(err)
 				return
 			}
 		}
+		err = rows.Err()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		rows.Close()
 		if err = tx.Commit(); err != nil {
 			log.Println(err)
 			return
