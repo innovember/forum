@@ -11,16 +11,18 @@ import (
 )
 
 var (
-	DBConn  *sql.DB
-	err     error
-	DB_USER string = os.Getenv("DB_USER")
-	DB_PASS string = os.Getenv("DB_PASS")
-	DB_AUTH string
-	DB_URI  string
+	DBConn *sql.DB
+	err    error
 )
 
 // get instance of db connection, and check db integrity with schema
 func GetDBInstance() (*sql.DB, error) {
+	var (
+		DB_USER string = os.Getenv("DB_USER")
+		DB_PASS string = os.Getenv("DB_PASS")
+		DB_AUTH string
+		DB_URI  string
+	)
 	if _, err = os.Stat(config.DBPath); os.IsNotExist(err) {
 		if err = os.Mkdir(config.DBPath, 0755); err != nil {
 			return nil, err

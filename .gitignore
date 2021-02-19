@@ -1,6 +1,8 @@
 # Database
 api/db/forum.db
 
+# env
+api/.env
 
 # Binaries for programs and plugins
 *.exe

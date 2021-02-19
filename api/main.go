@@ -4,6 +4,7 @@ import (
 	config "github.com/innovember/forum/api/config"
 	db "github.com/innovember/forum/api/db"
 	"github.com/innovember/forum/api/middleware"
+	"github.com/innovember/forum/api/services/loadEnv"
 	session "github.com/innovember/forum/api/services/session"
 
 	userHandler "github.com/innovember/forum/api/user/delivery"
@@ -13,14 +14,15 @@ import (
 	postHandler "github.com/innovember/forum/api/post/delivery"
 	postRepo "github.com/innovember/forum/api/post/repository"
 	postUsecase "github.com/innovember/forum/api/post/usecases"
-
-	//_ "github.com/mattn/go-sqlite3"
 	"log"
 	"net/http"
 	"os"
 )
 
 func Run() {
+	if errEnv := loadEnv.Load(); errEnv != nil {
+		log.Fatal(errEnv)
+	}
 	dbConn, err := db.GetDBInstance()
 	if err != nil {
 		log.Fatal("DB conn", err)
