@@ -1,11 +1,13 @@
 package main
 
 import (
+	"crypto/tls"
 	config "github.com/innovember/forum/api/config"
 	db "github.com/innovember/forum/api/db"
 	"github.com/innovember/forum/api/middleware"
 	"github.com/innovember/forum/api/services/loadEnv"
 	session "github.com/innovember/forum/api/services/session"
+	"time"
 
 	userHandler "github.com/innovember/forum/api/user/delivery"
 	userRepo "github.com/innovember/forum/api/user/repository"
@@ -20,6 +22,7 @@ import (
 )
 
 func Run() {
+	log.Println("Server is starting...")
 	if errEnv := loadEnv.Load(); errEnv != nil {
 		log.Fatal(errEnv)
 	}
@@ -31,7 +34,7 @@ func Run() {
 		log.Fatal("DB schema", err)
 	}
 	if err = session.ResetAll(dbConn); err != nil {
-		log.Fatal(err)
+		log.Fatal("Session reset", err)
 	}
 	session.Init(dbConn)
 	//Repository
@@ -63,8 +66,30 @@ func Run() {
 	if port == "" {
 		port = getPort()
 	}
-	log.Println("Server is listening", config.APIURLDev)
-	err = http.ListenAndServe(":"+port, mux)
+	cer, err := tls.LoadX509KeyPair("ssl/localhost.crt", "ssl/localhost.key")
+	if err != nil {
+		log.Fatal("SSL", err)
+		return
+	}
+	server := &http.Server{
+		ReadTimeout:    5 * time.Second,
+		WriteTimeout:   5 * time.Second,
+		IdleTimeout:    30 * time.Second,
+		Addr:           config.APIURLDev,
+		MaxHeaderBytes: 1 << 20,
+		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{cer},
+		},
+		Handler:      middleware.Limit(mux),
+		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
+	}
+	// log.Println("Server is listening", "http://"+config.APIURLDev)
+	// err = http.ListenAndServe(":"+port, mux)
+	// if err != nil {
+	// 	log.Fatal("ListenAndServe: ", err)
+	// }
+	log.Println("Server is listening", "https://"+config.APIURLDev)
+	err = server.ListenAndServeTLS("", "")
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

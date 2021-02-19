@@ -6,7 +6,7 @@ import (
 
 const (
 	APIPortDev        = "8081"
-	APIURLDev         = "http://localhost:" + APIPortDev
+	APIURLDev         = "localhost:" + APIPortDev
 	DBDriver          = "sqlite3"
 	DBPath            = "./db"
 	DBFileName        = "forum.db"
