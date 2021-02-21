@@ -12,10 +12,12 @@ type Response struct {
 	Data    interface{} `json:"data"`
 }
 
-var err error
-var output []byte
+var (
+	err    error
+	output []byte
+)
 
-func JSON(w http.ResponseWriter, responseStatus bool, httpStatus int, message, data interface{}) {
+func Respond(w http.ResponseWriter, responseStatus bool, httpStatus int, message, data interface{}) {
 	//fmt.Println(responseStatus, httpStatus, message, data)
 	output, err = json.Marshal(Response{responseStatus, httpStatus, message, data})
 	if err != nil {
@@ -29,9 +31,9 @@ func JSON(w http.ResponseWriter, responseStatus bool, httpStatus int, message, d
 }
 
 func Error(w http.ResponseWriter, httpStatus int, err error) {
-	JSON(w, false, httpStatus, err.Error(), nil)
+	Respond(w, false, httpStatus, err.Error(), nil)
 }
 
 func Success(w http.ResponseWriter, message string, httpStatus int, data interface{}) {
-	JSON(w, true, httpStatus, message, data)
+	Respond(w, true, httpStatus, message, data)
 }

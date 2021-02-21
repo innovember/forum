@@ -12,4 +12,5 @@ type Post struct {
 	CreatedAt      int64      `json:"createdAt,omitempty"`
 	EditedAt       int64      `json:"editedAt,omitempty"`
 	CommentsNumber int        `json:"commentsNumber"`
+	IsImage        bool       `json:"isImage"`
 }

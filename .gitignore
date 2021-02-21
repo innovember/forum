@@ -4,6 +4,9 @@ api/db/forum.db
 # env
 api/.env
 
+# images
+api/images/
+
 # Binaries for programs and plugins
 *.exe
 *.exe~

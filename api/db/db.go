@@ -28,6 +28,11 @@ func GetDBInstance() (*sql.DB, error) {
 			return nil, err
 		}
 	}
+	if _, err = os.Stat(config.ImagesPath); os.IsNotExist(err) {
+		if err = os.Mkdir(config.ImagesPath, 0755); err != nil {
+			return nil, err
+		}
+	}
 	if DB_PASS != "" && DB_USER != "" {
 		DB_AUTH = fmt.Sprintf("?_auth&_auth_user=%s&_auth_pass=%s", DB_USER, DB_PASS)
 	}

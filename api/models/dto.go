@@ -17,6 +17,7 @@ type InputPost struct {
 	Title      string   `json:"title"`
 	Content    string   `json:"content"`
 	Categories []string `json:"categories"`
+	IsImage    bool     `json:"isImage"`
 }
 
 type InputComment struct {

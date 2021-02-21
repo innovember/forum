@@ -9,6 +9,8 @@ const (
 	APIURLDev         = "localhost:" + APIPortDev
 	DBDriver          = "sqlite3"
 	DBPath            = "./db"
+	ImagesPath        = "./images"
+	MaxImageSize      = 20 * 1024 * 1024
 	DBFileName        = "forum.db"
 	DBSchema          = "schema.sql"
 	SessionCookieName = "forumSecretKey"
