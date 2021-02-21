@@ -92,6 +92,7 @@ func (ph *PostHandler) CreatePostHandlerFunc(w http.ResponseWriter, r *http.Requ
 		CreatedAt:  now,
 		PostRating: 0,
 		EditedAt:   0,
+		IsImage:    input.IsImage,
 	}
 	if newPost, status, err = ph.postUcase.Create(&post, input.Categories); err != nil {
 		response.Error(w, status, err)
@@ -486,6 +487,7 @@ func (ph *PostHandler) EditPostHandler(w http.ResponseWriter, r *http.Request) {
 			Title:    input.Title,
 			Content:  input.Content,
 			EditedAt: now,
+			IsImage:  input.IsImage,
 		}
 		if err = ph.categoryUcase.Update(post.ID, input.Categories); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)

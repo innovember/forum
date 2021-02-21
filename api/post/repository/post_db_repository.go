@@ -29,8 +29,8 @@ func (pr *PostDBRepository) Create(post *models.Post, categories []string) (*mod
 		err          error
 	)
 	if result, err = pr.dbConn.Exec(`
-	INSERT INTO posts(author_id,title, content, created_at,edited_at)
-	VALUES(?,?,?,?,?)`, post.AuthorID, post.Title, post.Content, now, post.EditedAt); err != nil {
+	INSERT INTO posts(author_id,title, content, created_at,edited_at, is_image)
+	VALUES(?,?,?,?,?,?)`, post.AuthorID, post.Title, post.Content, now, post.EditedAt, post.IsImage); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 	if post.ID, err = result.LastInsertId(); err != nil {
@@ -75,7 +75,8 @@ func (pr *PostDBRepository) GetAllPosts(userID int64) (posts []models.Post, stat
 	for rows.Next() {
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
-			&p.CreatedAt, &p.EditedAt, &p.PostRating, &p.UserRating)
+			&p.CreatedAt, &p.EditedAt, &p.IsImage,
+			&p.PostRating, &p.UserRating)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -145,7 +146,7 @@ func (pr *PostDBRepository) GetPostByID(userID int64, postID int64) (post *model
 	)
 	if err = pr.dbConn.QueryRow(`
 	SELECT * FROM posts WHERE id = ?`, postID,
-	).Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content, &p.CreatedAt, &p.EditedAt); err != nil {
+	).Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content, &p.CreatedAt, &p.EditedAt, &p.IsImage); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound, errors.New("post not found")
 		}
@@ -191,7 +192,7 @@ func (pr *PostDBRepository) GetPostsByCategories(categories []string, userID int
 	for rows.Next() {
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
-			&p.CreatedAt, &p.EditedAt)
+			&p.CreatedAt, &p.EditedAt, &p.IsImage)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -239,7 +240,8 @@ func (pr *PostDBRepository) GetPostsByRating(orderBy string, userID int64) (post
 	for rows.Next() {
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
-			&p.CreatedAt, &p.EditedAt, &p.PostRating, &p.UserRating)
+			&p.CreatedAt, &p.EditedAt, &p.IsImage,
+			&p.PostRating, &p.UserRating)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -284,7 +286,8 @@ func (pr *PostDBRepository) GetPostsByDate(orderBy string, userID int64) (posts 
 	for rows.Next() {
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
-			&p.CreatedAt, &p.EditedAt, &p.PostRating, &p.UserRating)
+			&p.CreatedAt, &p.EditedAt,
+			&p.IsImage, &p.PostRating, &p.UserRating)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -321,7 +324,7 @@ func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64, userID int64) 
 	for rows.Next() {
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
-			&p.CreatedAt, &p.EditedAt)
+			&p.CreatedAt, &p.EditedAt, &p.IsImage)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -368,7 +371,7 @@ func (pr *PostDBRepository) GetRatedPostsByUser(userID int64, orderBy string, re
 	for rows.Next() {
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
-			&p.CreatedAt, &p.EditedAt)
+			&p.CreatedAt, &p.EditedAt, &p.IsImage)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -405,10 +408,11 @@ func (pr *PostDBRepository) Update(post *models.Post) (editedPost *models.Post, 
 	if result, err = tx.Exec(`UPDATE posts
 							SET title = ?,
 							content = ?,
-							edited_at = ?
+							edited_at = ?,
+							is_image = ?
 							WHERE id = ?`,
 		post.Title, post.Content, post.EditedAt,
-		post.ID); err != nil {
+		post.IsImage, post.ID); err != nil {
 		tx.Rollback()
 		if err == sql.ErrNoRows {
 			return nil, http.StatusInternalServerError, errors.New("post not found")
