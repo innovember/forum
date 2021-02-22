@@ -3,13 +3,18 @@ package delivery
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/innovember/forum/api/config"
 	"github.com/innovember/forum/api/middleware"
 	"github.com/innovember/forum/api/models"
 	"github.com/innovember/forum/api/post"
 	"github.com/innovember/forum/api/response"
 	"github.com/innovember/forum/api/user"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"regexp"
 	"strconv"
 	"time"
 )
@@ -53,6 +58,8 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	// Notifications
 	mux.HandleFunc("/api/notifications", mw.SetHeaders(mw.AuthorizedOnly(ph.GetAllNotificationsHandler)))
 	mux.HandleFunc("/api/notifications/delete/", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteNotificationsHandler)))
+	// Images
+	mux.HandleFunc("/api/image/upload", mw.SetHeaders(mw.AuthorizedOnly(ph.UploadImageHandler)))
 }
 
 func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
@@ -697,7 +704,6 @@ func (ph *PostHandler) DeleteNotificationsHandler(w http.ResponseWriter, r *http
 			cookie *http.Cookie
 			user   *models.User
 		)
-
 		cookie, _ = r.Cookie(config.SessionCookieName)
 		if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
 			response.Error(w, status, err)
@@ -714,6 +720,69 @@ func (ph *PostHandler) DeleteNotificationsHandler(w http.ResponseWriter, r *http
 		response.Success(w, "notifications has been deleted", status, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (ph *PostHandler) UploadImageHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		var (
+			status       int
+			err          error
+			cookie       *http.Cookie
+			user         *models.User
+			maxImageSize int64 = config.MaxImageSize
+			image        multipart.File
+			fileHeader   *multipart.FileHeader
+			file         *os.File
+			regex        = regexp.MustCompile(`^.*\.(jpg|JPG|jpeg|JPEG|gif|GIF|png|PNG|svg|SVG)$`)
+			postID       int
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if r.ContentLength > maxImageSize {
+			response.Error(w, http.StatusExpectationFailed, errors.New("image too heavy,limit size to 20MB"))
+			return
+		}
+		if image, fileHeader, err = r.FormFile("image"); err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		if fileHeader != nil {
+			defer image.Close()
+		}
+		if fileHeader != nil && !regex.MatchString(fileHeader.Filename) {
+			response.Error(w, http.StatusUnprocessableEntity, errors.New("invalid file type"))
+			return
+		}
+		id := r.FormValue("postID")
+		if postID, err = strconv.Atoi(id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("no such id"))
+			return
+		}
+		if fileHeader != nil {
+			file, err = os.Create(fmt.Sprintf("./images/%v", postID))
+			if err != nil {
+				response.Error(w, http.StatusInternalServerError, err)
+				return
+			}
+			defer file.Close()
+			_, err = io.Copy(file, image)
+			if err != nil {
+				response.Error(w, http.StatusInternalServerError, err)
+				return
+			}
+		}
+		if err = ph.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "image uploaded", http.StatusCreated, nil)
+	} else {
+		http.Error(w, "Only POST method allowed, return to main page", 405)
 		return
 	}
 }
