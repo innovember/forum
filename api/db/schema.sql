@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS posts (
 	created_at INTEGER,
 	edited_at INTEGER,
 	is_image INTEGER,
+	image_path TEXT,
 	FOREIGN KEY (author_id) REFERENCES users (id) ON
 DELETE CASCADE
 );

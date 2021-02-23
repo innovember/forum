@@ -78,7 +78,8 @@ func Run() {
 		Addr:           config.APIURLDev,
 		MaxHeaderBytes: 1 << 20,
 		TLSConfig: &tls.Config{
-			Certificates: []tls.Certificate{cer},
+			Certificates:       []tls.Certificate{cer},
+			InsecureSkipVerify: true,
 		},
 		Handler:      middleware.Limit(mux),
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),

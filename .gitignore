@@ -1,11 +1,11 @@
 # Database
 api/db/forum.db
 
-# env
-api/.env
-
 # images
 api/images/
+
+# ssl
+api/ssl/
 
 # Binaries for programs and plugins
 *.exe
@@ -40,7 +40,6 @@ api/images/
 .env.development.local
 .env.test.local
 .env.production.local
-.env
 
 npm-debug.log*
 yarn-debug.log*

@@ -13,4 +13,5 @@ type Post struct {
 	EditedAt       int64      `json:"editedAt,omitempty"`
 	CommentsNumber int        `json:"commentsNumber"`
 	IsImage        bool       `json:"isImage"`
+	ImagePath      string     `json:"imagePath"`
 }
