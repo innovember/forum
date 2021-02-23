@@ -66,7 +66,7 @@ func Run() {
 	if port == "" {
 		port = getPort()
 	}
-	cer, err := tls.LoadX509KeyPair("ssl/localhost.crt", "ssl/localhost.key")
+	cer, err := tls.LoadX509KeyPair("ssl/localhost.pem", "ssl/localhost-key.pem")
 	if err != nil {
 		log.Fatal("SSL", err)
 		return

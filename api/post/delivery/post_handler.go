@@ -10,12 +10,14 @@ import (
 	"github.com/innovember/forum/api/post"
 	"github.com/innovember/forum/api/response"
 	"github.com/innovember/forum/api/user"
+	uuid "github.com/satori/go.uuid"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -60,6 +62,7 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/notifications/delete/", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteNotificationsHandler)))
 	// Images
 	mux.HandleFunc("/api/image/upload", mw.SetHeaders(mw.AuthorizedOnly(ph.UploadImageHandler)))
+	mux.Handle("/images/", http.StripPrefix("/images", http.FileServer(http.Dir("./images"))))
 }
 
 func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
@@ -736,7 +739,7 @@ func (ph *PostHandler) UploadImageHandler(w http.ResponseWriter, r *http.Request
 			fileHeader   *multipart.FileHeader
 			file         *os.File
 			regex        = regexp.MustCompile(`^.*\.(jpg|JPG|jpeg|JPEG|gif|GIF|png|PNG|svg|SVG)$`)
-			postID       int
+			fileName     string
 		)
 		cookie, _ = r.Cookie(config.SessionCookieName)
 		if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
@@ -758,13 +761,11 @@ func (ph *PostHandler) UploadImageHandler(w http.ResponseWriter, r *http.Request
 			response.Error(w, http.StatusUnprocessableEntity, errors.New("invalid file type"))
 			return
 		}
-		id := r.FormValue("postID")
-		if postID, err = strconv.Atoi(id); err != nil {
-			response.Error(w, http.StatusBadRequest, errors.New("no such id"))
-			return
-		}
+		fileNameArr := strings.Split(fileHeader.Filename, ".")
+		fileExtension := fileNameArr[len(fileNameArr)-1]
+		fileName = fmt.Sprint(uuid.NewV4())
 		if fileHeader != nil {
-			file, err = os.Create(fmt.Sprintf("./images/%v", postID))
+			file, err = os.Create(fmt.Sprintf("./images/%s.%s", fileName, fileExtension))
 			if err != nil {
 				response.Error(w, http.StatusInternalServerError, err)
 				return
@@ -780,7 +781,7 @@ func (ph *PostHandler) UploadImageHandler(w http.ResponseWriter, r *http.Request
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		response.Success(w, "image uploaded", http.StatusCreated, nil)
+		response.Success(w, "image uploaded", http.StatusCreated, fmt.Sprintf("%s/images/%s.%s", config.APIURLDev, fileName, fileExtension))
 	} else {
 		http.Error(w, "Only POST method allowed, return to main page", 405)
 		return
