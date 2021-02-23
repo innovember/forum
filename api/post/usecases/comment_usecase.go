@@ -18,15 +18,15 @@ func (cu *CommentUsecase) Create(userID int64, comment *models.Comment) (newComm
 	}
 	return newComment, status, err
 }
-func (cu *CommentUsecase) GetCommentsByPostID(postID int64) (comments []models.Comment, status int, err error) {
-	if comments, status, err = cu.commentRepo.GetCommentsByPostID(postID); err != nil {
+func (cu *CommentUsecase) GetCommentsByPostID(userID, postID int64) (comments []models.Comment, status int, err error) {
+	if comments, status, err = cu.commentRepo.GetCommentsByPostID(userID, postID); err != nil {
 		return nil, status, err
 	}
 	return comments, status, err
 }
 
-func (cu *CommentUsecase) GetCommentsByAuthorID(authorID int64) (comments []models.Comment, status int, err error) {
-	if comments, status, err = cu.commentRepo.GetCommentsByAuthorID(authorID); err != nil {
+func (cu *CommentUsecase) GetCommentsByAuthorID(userID, authorID int64) (comments []models.Comment, status int, err error) {
+	if comments, status, err = cu.commentRepo.GetCommentsByAuthorID(userID, authorID); err != nil {
 		return nil, status, err
 	}
 	return comments, status, err
@@ -39,8 +39,8 @@ func (cu *CommentUsecase) Update(comment *models.Comment) (editedComment *models
 	return editedComment, status, err
 }
 
-func (cu *CommentUsecase) GetCommentByID(commentID int64) (comment *models.Comment, status int, err error) {
-	if comment, status, err = cu.commentRepo.GetCommentByID(commentID); err != nil {
+func (cu *CommentUsecase) GetCommentByID(userID, commentID int64) (comment *models.Comment, status int, err error) {
+	if comment, status, err = cu.commentRepo.GetCommentByID(userID, commentID); err != nil {
 		return nil, status, err
 	}
 	return comment, status, err

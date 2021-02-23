@@ -40,9 +40,10 @@ func (cr *CommentDBRepository) Create(userID int64, comment *models.Comment) (*m
 	return nil, http.StatusBadRequest, errors.New("comment hasn't been created")
 }
 
-func (cr *CommentDBRepository) GetCommentsByPostID(postID int64) (comments []models.Comment, status int, err error) {
+func (cr *CommentDBRepository) GetCommentsByPostID(userID, postID int64) (comments []models.Comment, status int, err error) {
 	var (
-		rows *sql.Rows
+		rows            *sql.Rows
+		commentRateRepo = NewRateCommentDBRepository(cr.dbConn)
 	)
 	if rows, err = cr.dbConn.Query(`
 	SELECT * FROM comments 
@@ -56,6 +57,9 @@ func (cr *CommentDBRepository) GetCommentsByPostID(postID int64) (comments []mod
 		var c models.Comment
 		rows.Scan(&c.ID, &c.AuthorID, &c.PostID, &c.Content, &c.CreatedAt, &c.EditedAt)
 		if status, err = cr.GetAuthor(&c); err != nil {
+			return nil, status, err
+		}
+		if c.CommentRating, c.UserRating, err = commentRateRepo.GetCommentRating(c.ID, userID); err != nil {
 			return nil, status, err
 		}
 		comments = append(comments, c)
@@ -82,9 +86,10 @@ func (cr *CommentDBRepository) GetAuthor(comment *models.Comment) (status int, e
 	return http.StatusOK, nil
 }
 
-func (cr *CommentDBRepository) GetCommentsByAuthorID(authorID int64) (comments []models.Comment, status int, err error) {
+func (cr *CommentDBRepository) GetCommentsByAuthorID(userID, authorID int64) (comments []models.Comment, status int, err error) {
 	var (
-		rows *sql.Rows
+		rows            *sql.Rows
+		commentRateRepo = NewRateCommentDBRepository(cr.dbConn)
 	)
 	if rows, err = cr.dbConn.Query(`
 		SELECT *
@@ -99,6 +104,9 @@ func (cr *CommentDBRepository) GetCommentsByAuthorID(authorID int64) (comments [
 		var c models.Comment
 		rows.Scan(&c.ID, &c.AuthorID, &c.PostID, &c.Content, &c.CreatedAt, &c.EditedAt)
 		if status, err = cr.GetAuthor(&c); err != nil {
+			return nil, status, err
+		}
+		if c.CommentRating, c.UserRating, err = commentRateRepo.GetCommentRating(c.ID, userID); err != nil {
 			return nil, status, err
 		}
 		comments = append(comments, c)
@@ -159,8 +167,11 @@ func (cr *CommentDBRepository) Update(comment *models.Comment) (editedComment *m
 	return nil, http.StatusNotModified, errors.New("could not update the comment")
 }
 
-func (cr *CommentDBRepository) GetCommentByID(commentID int64) (comment *models.Comment, status int, err error) {
-	var c models.Comment
+func (cr *CommentDBRepository) GetCommentByID(userID, commentID int64) (comment *models.Comment, status int, err error) {
+	var (
+		c               models.Comment
+		commentRateRepo = NewRateCommentDBRepository(cr.dbConn)
+	)
 	if err = cr.dbConn.QueryRow(`
 	SELECT * FROM comments WHERE id = ?`, commentID,
 	).Scan(&c.ID, &c.AuthorID, &c.PostID, &c.Content, &c.CreatedAt, &c.EditedAt); err != nil {
@@ -170,6 +181,9 @@ func (cr *CommentDBRepository) GetCommentByID(commentID int64) (comment *models.
 		return nil, http.StatusInternalServerError, err
 	}
 	if status, err = cr.GetAuthor(&c); err != nil {
+		return nil, status, err
+	}
+	if c.CommentRating, c.UserRating, err = commentRateRepo.GetCommentRating(c.ID, userID); err != nil {
 		return nil, status, err
 	}
 	return &c, http.StatusOK, nil

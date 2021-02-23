@@ -40,12 +40,12 @@ type RateRepository interface {
 
 type CommentRepository interface {
 	Create(userID int64, comment *models.Comment) (newComment *models.Comment, status int, err error)
-	GetCommentsByPostID(postID int64) (comments []models.Comment, status int, err error)
+	GetCommentsByPostID(userID, postID int64) (comments []models.Comment, status int, err error)
 	GetAuthor(comment *models.Comment) (status int, err error)
-	GetCommentsByAuthorID(authorID int64) (comments []models.Comment, status int, err error)
+	GetCommentsByAuthorID(userID, authorID int64) (comments []models.Comment, status int, err error)
 	GetCommentsNumberByPostID(postID int64) (commentsNumber int, err error)
 	Update(comment *models.Comment) (editedComment *models.Comment, status int, err error)
-	GetCommentByID(commentID int64) (comment *models.Comment, status int, err error)
+	GetCommentByID(userID, commentID int64) (comment *models.Comment, status int, err error)
 	Delete(commentID int64) (err error)
 	DeleteCommentByPostID(postID int64) (err error)
 }
