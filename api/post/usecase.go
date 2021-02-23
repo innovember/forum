@@ -49,3 +49,11 @@ type NotificationUsecase interface {
 	DeleteNotificationsByRateID(rateID int64) (err error)
 	DeleteNotificationsByCommentID(commentID int64) (err error)
 }
+
+type RateCommentUsecase interface {
+	RateComment(commentID int64, userID int64, vote int) (int64, error)
+	GetCommentRating(commentID int64, userID int64) (rating int, userRating int, err error)
+	IsRatedBefore(commentID int64, userID int64, vote int) (bool, error)
+	DeleteRateFromComment(commentID int64, userID int64, vote int) error
+	DeleteRatesByCommentID(commentID int64) (err error)
+}

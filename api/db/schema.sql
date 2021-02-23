@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS notifications (
 	post_id INTEGER,
 	rate_id INTEGER,
 	comment_id INTEGER,
+	comment_rate_id INTEGER,
 	created_at INTEGER,
 	FOREIGN KEY (receiver_id) REFERENCES users (id) ON
 DELETE CASCADE,
@@ -78,4 +79,16 @@ DELETE CASCADE,
 DELETE CASCADE,
 	FOREIGN KEY (rate_id) REFERENCES post_rating (id) ON
 DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS comment_rating (
+	id INTEGER,
+	user_id INTEGER NOT NULL,
+	comment_id INTEGER NOT NULL,
+	rate INTEGER,
+	FOREIGN KEY (comment_id) REFERENCES comments (id) ON
+DELETE CASCADE,
+	FOREIGN KEY(user_id) REFERENCES users (id) ON
+DELETE CASCADE,
+	PRIMARY KEY(id)
 );

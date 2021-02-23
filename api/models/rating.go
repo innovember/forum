@@ -12,3 +12,11 @@ type PostRating struct {
 	Rate   int   `json:"rate"`
 	Author *User `json:"author"`
 }
+
+type CommentRating struct {
+	ID        int   `json:"id"`
+	UserID    int64 `json:"userID"`
+	CommentID int64 `json:"commentID"`
+	Rate      int   `json:"rate"`
+	Author    *User `json:"author"`
+}

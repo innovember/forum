@@ -58,3 +58,13 @@ type NotificationRepository interface {
 	DeleteNotificationsByRateID(rateID int64) (err error)
 	DeleteNotificationsByCommentID(commentID int64) (err error)
 }
+
+type RateCommentRepository interface {
+	RateComment(commentID int64, userID int64, vote int) (int64, error)
+	GetCommentRating(commentID int64, userID int64) (rating int, userRating int, err error)
+	IsRatedBefore(commentID int64, userID int64, vote int) (bool, error)
+	DeleteRateFromComment(commentID int64, userID int64, vote int) error
+	GetCommentRatingByID(commentRateID int64) (commentRating *models.CommentRating, status int, err error)
+	GetAuthor(commentRating *models.CommentRating) (status int, err error)
+	DeleteRatesByCommentID(commentID int64) (err error)
+}
