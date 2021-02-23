@@ -51,3 +51,10 @@ func (nu *NotificationUsecase) DeleteNotificationsByCommentID(commentID int64) (
 	}
 	return err
 }
+
+func (nu *NotificationUsecase) DeleteNotificationsByCommentRateID(commentRateID int64) (err error) {
+	if err = nu.notificationRepo.DeleteNotificationsByCommentRateID(commentRateID); err != nil {
+		return err
+	}
+	return err
+}

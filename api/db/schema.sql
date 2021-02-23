@@ -78,6 +78,8 @@ DELETE CASCADE,
 	FOREIGN KEY (comment_id) REFERENCES comments (id) ON
 DELETE CASCADE,
 	FOREIGN KEY (rate_id) REFERENCES post_rating (id) ON
+DELETE CASCADE,
+	FOREIGN KEY (comment_rate_id) REFERENCES comment_rating (id) ON
 DELETE CASCADE
 );
 

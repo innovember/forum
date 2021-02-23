@@ -234,9 +234,10 @@ func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Reques
 	}
 	if user.ID != post.AuthorID {
 		notification := models.Notification{
-			PostID:    input.ID,
-			RateID:    rateID,
-			CommentID: 0,
+			PostID:        input.ID,
+			RateID:        rateID,
+			CommentID:     0,
+			CommentRateID: 0,
 		}
 		if _, status, err = ph.notificationUcase.Create(&notification); err != nil {
 			response.Error(w, status, err)
@@ -416,9 +417,10 @@ func (ph *PostHandler) CreateCommentHandlerFunc(w http.ResponseWriter, r *http.R
 	}
 	if user.ID != post.AuthorID {
 		notification := models.Notification{
-			PostID:    newComment.PostID,
-			RateID:    0,
-			CommentID: newComment.ID,
+			PostID:        newComment.PostID,
+			RateID:        0,
+			CommentID:     newComment.ID,
+			CommentRateID: 0,
 		}
 		if _, status, err = ph.notificationUcase.Create(&notification); err != nil {
 			response.Error(w, status, err)
@@ -878,7 +880,7 @@ func (ph *PostHandler) RateCommentHandlerFunc(w http.ResponseWriter, r *http.Req
 		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
-	if err = ph.notificationUcase.DeleteNotificationsByRateID(commentRateID); err != nil {
+	if err = ph.notificationUcase.DeleteNotificationsByCommentRateID(commentRateID); err != nil {
 		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -888,9 +890,10 @@ func (ph *PostHandler) RateCommentHandlerFunc(w http.ResponseWriter, r *http.Req
 	}
 	if user.ID != comment.AuthorID {
 		notification := models.Notification{
-			PostID:    input.ID,
-			RateID:    commentRateID,
-			CommentID: 0,
+			PostID:        input.ID,
+			CommentRateID: commentRateID,
+			CommentID:     comment.ID,
+			RateID:        0,
 		}
 		if _, status, err = ph.notificationUcase.Create(&notification); err != nil {
 			response.Error(w, status, err)
@@ -901,6 +904,6 @@ func (ph *PostHandler) RateCommentHandlerFunc(w http.ResponseWriter, r *http.Req
 		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
-	response.Success(w, "post has been rated", http.StatusOK, rating)
+	response.Success(w, "comment has been rated", http.StatusOK, rating)
 	return
 }

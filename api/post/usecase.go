@@ -48,6 +48,7 @@ type NotificationUsecase interface {
 	DeleteNotificationsByPostID(postID int64) (err error)
 	DeleteNotificationsByRateID(rateID int64) (err error)
 	DeleteNotificationsByCommentID(commentID int64) (err error)
+	DeleteNotificationsByCommentRateID(commentRateID int64) (err error)
 }
 
 type RateCommentUsecase interface {
