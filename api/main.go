@@ -44,6 +44,7 @@ func Run() {
 	categoryRepository := postRepo.NewCategoryDBRepository(dbConn)
 	commentRepository := postRepo.NewCommentDBRepository(dbConn)
 	notificationRepository := postRepo.NewNotificationDBRepository(dbConn)
+	commentRateRepository := postRepo.NewRateCommentDBRepository(dbConn)
 	//Usecases
 	userUcase := userUsecase.NewUserUsecase(userRepository)
 	postUcase := postUsecase.NewPostUsecase(postRepository)
@@ -51,6 +52,7 @@ func Run() {
 	categoryUcase := postUsecase.NewCategoryUsecase(categoryRepository)
 	commentUcase := postUsecase.NewCommentUsecase(commentRepository)
 	notificationUcase := postUsecase.NewNotificationUsecase(notificationRepository)
+	commentRateUcase := postUsecase.NewRateCommentUsecase(commentRateRepository)
 	//Middleware
 	mux := http.NewServeMux()
 	mw := middleware.NewMiddlewareManager()
@@ -60,7 +62,8 @@ func Run() {
 
 	postHandler := postHandler.NewPostHandler(postUcase, userUcase,
 		postRateUcase, categoryUcase,
-		commentUcase, notificationUcase)
+		commentUcase, notificationUcase,
+		commentRateUcase)
 	postHandler.Configure(mux, mw)
 	port := config.APIPortDev
 	if port == "" {

@@ -28,18 +28,22 @@ type PostHandler struct {
 	categoryUcase     post.CategoryUsecase
 	commentUcase      post.CommentUsecase
 	notificationUcase post.NotificationUsecase
+	commentRateUcase  post.RateCommentUsecase
 }
 
 func NewPostHandler(postUcase post.PostUsecase, userUcase user.UserUsecase,
 	rateUcase post.RateUsecase, categoryUcase post.CategoryUsecase,
-	commentUcase post.CommentUsecase, notificationUcase post.NotificationUsecase) *PostHandler {
+	commentUcase post.CommentUsecase, notificationUcase post.NotificationUsecase,
+	commentRateUcase post.RateCommentUsecase) *PostHandler {
 	return &PostHandler{
 		postUcase:         postUcase,
 		userUcase:         userUcase,
 		rateUcase:         rateUcase,
 		categoryUcase:     categoryUcase,
 		commentUcase:      commentUcase,
-		notificationUcase: notificationUcase}
+		notificationUcase: notificationUcase,
+		commentRateUcase:  commentRateUcase,
+	}
 }
 
 func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareManager) {
@@ -57,6 +61,8 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/comment/filter", mw.SetHeaders(ph.FilterComments))
 	mux.HandleFunc("/api/comment/edit", mw.SetHeaders(mw.AuthorizedOnly(ph.EditCommentHandler)))
 	mux.HandleFunc("/api/comment/delete/", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteCommentHandler)))
+	mux.HandleFunc("/api/comment/rate", mw.SetHeaders(mw.AuthorizedOnly(ph.RateCommentHandler)))
+
 	// Notifications
 	mux.HandleFunc("/api/notifications", mw.SetHeaders(mw.AuthorizedOnly(ph.GetAllNotificationsHandler)))
 	mux.HandleFunc("/api/notifications/delete/", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteNotificationsHandler)))
@@ -442,19 +448,29 @@ func (ph *PostHandler) FilterCommentsFunc(w http.ResponseWriter, r *http.Request
 		comments []models.Comment
 		status   int
 		err      error
+		user     *models.User
+		cookie   *http.Cookie
 	)
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
 		return
 	}
+	cookie, err = r.Cookie(config.SessionCookieName)
+	if err != nil {
+		user = &models.User{ID: -1}
+	} else {
+		if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
+			user = &models.User{ID: -1}
+		}
+	}
 	switch input.Option {
 	case "post":
-		if comments, status, err = ph.commentUcase.GetCommentsByPostID(input.PostID); err != nil {
+		if comments, status, err = ph.commentUcase.GetCommentsByPostID(user.ID, input.PostID); err != nil {
 			response.Error(w, status, err)
 			return
 		}
 	case "user":
-		if comments, status, err = ph.commentUcase.GetCommentsByAuthorID(input.UserID); err != nil {
+		if comments, status, err = ph.commentUcase.GetCommentsByAuthorID(user.ID, input.UserID); err != nil {
 			response.Error(w, status, err)
 			return
 		}
@@ -648,7 +664,7 @@ func (ph *PostHandler) DeleteCommentHandler(w http.ResponseWriter, r *http.Reque
 			response.Error(w, status, err)
 			return
 		}
-		if comment, status, err = ph.commentUcase.GetCommentByID(int64(commentID)); err != nil {
+		if comment, status, err = ph.commentUcase.GetCommentByID(user.ID, int64(commentID)); err != nil {
 			response.Error(w, status, err)
 			return
 		}
@@ -788,4 +804,103 @@ func (ph *PostHandler) UploadImageHandler(w http.ResponseWriter, r *http.Request
 		http.Error(w, "Only POST method allowed, return to main page", 405)
 		return
 	}
+}
+
+func (ph *PostHandler) RateCommentHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		ph.RateCommentHandlerFunc(w, r)
+	default:
+		http.Error(w, "Only POST method allowed, return to main page", 405)
+	}
+}
+
+func (ph *PostHandler) RateCommentHandlerFunc(w http.ResponseWriter, r *http.Request) {
+	var (
+		input         models.InputRate
+		rating        models.Rating
+		err           error
+		status        int
+		user          *models.User
+		cookie        *http.Cookie
+		isRatedBefore bool
+		commentRateID int64
+		comment       *models.Comment
+	)
+	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+	if input.Reaction != -1 && input.Reaction != 1 {
+		response.Error(w, http.StatusBadRequest, errors.New("only 1 or -1 values accepted"))
+		return
+	}
+	cookie, _ = r.Cookie(config.SessionCookieName)
+	if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
+		response.Error(w, status, err)
+		return
+	}
+	switch input.Reaction {
+	case 1:
+		isRatedBefore, err = ph.commentRateUcase.IsRatedBefore(input.ID, user.ID, input.Reaction)
+		if err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if isRatedBefore {
+			if err = ph.commentRateUcase.DeleteRateFromComment(input.ID, user.ID, input.Reaction); err != nil {
+				response.Error(w, http.StatusInternalServerError, err)
+				return
+			}
+			response.Success(w, "rate cancelled due to re-voting", http.StatusOK, nil)
+			return
+		}
+	case -1:
+		isRatedBefore, err = ph.commentRateUcase.IsRatedBefore(input.ID, user.ID, input.Reaction)
+		if err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if isRatedBefore {
+			if err = ph.commentRateUcase.DeleteRateFromComment(input.ID, user.ID, input.Reaction); err != nil {
+				response.Error(w, http.StatusInternalServerError, err)
+				return
+			}
+			response.Success(w, "rate cancelled due to re-voting", http.StatusOK, nil)
+			return
+		}
+	}
+	if commentRateID, err = ph.commentRateUcase.RateComment(input.ID, user.ID, input.Reaction); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	if rating.Rating, rating.UserRating, err = ph.commentRateUcase.GetCommentRating(input.ID, user.ID); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	if err = ph.notificationUcase.DeleteNotificationsByRateID(commentRateID); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	if comment, status, err = ph.commentUcase.GetCommentByID(user.ID, input.ID); err != nil {
+		response.Error(w, status, err)
+		return
+	}
+	if user.ID != comment.AuthorID {
+		notification := models.Notification{
+			PostID:    input.ID,
+			RateID:    commentRateID,
+			CommentID: 0,
+		}
+		if _, status, err = ph.notificationUcase.Create(&notification); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+	}
+	if err = ph.userUcase.UpdateActivity(user.ID); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	response.Success(w, "post has been rated", http.StatusOK, rating)
+	return
 }
