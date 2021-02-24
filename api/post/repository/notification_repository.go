@@ -106,7 +106,7 @@ func (nr *NotificationDBRepository) GetAllNotifications(receiverID int64) (notif
 				return nil, status, err
 			}
 		}
-		if n.RateID != 0 {
+		if n.CommentRateID != 0 {
 			if n.CommentRating, status, err = commentRateRepo.GetCommentRatingByID(n.CommentRateID); err != nil {
 				return nil, status, err
 			}

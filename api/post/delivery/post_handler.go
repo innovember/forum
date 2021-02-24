@@ -678,6 +678,10 @@ func (ph *PostHandler) DeleteCommentHandler(w http.ResponseWriter, r *http.Reque
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
+		if err = ph.commentRateUcase.DeleteRatesByCommentID(comment.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
 		if err = ph.commentUcase.Delete(comment.ID); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
@@ -890,7 +894,7 @@ func (ph *PostHandler) RateCommentHandlerFunc(w http.ResponseWriter, r *http.Req
 	}
 	if user.ID != comment.AuthorID {
 		notification := models.Notification{
-			PostID:        input.ID,
+			PostID:        comment.PostID,
 			CommentRateID: commentRateID,
 			CommentID:     comment.ID,
 			RateID:        0,
