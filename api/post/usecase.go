@@ -57,4 +57,5 @@ type RateCommentUsecase interface {
 	IsRatedBefore(commentID int64, userID int64, vote int) (bool, error)
 	DeleteRateFromComment(commentID int64, userID int64, vote int) error
 	DeleteRatesByCommentID(commentID int64) (err error)
+	DeleteCommentsRateByPostID(postID int64) (err error)
 }

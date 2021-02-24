@@ -46,7 +46,14 @@ func (ru *RateCommentUsecase) DeleteRateFromComment(commentID int64, userID int6
 }
 
 func (ru *RateCommentUsecase) DeleteRatesByCommentID(commentID int64) (err error) {
-	if err := ru.rateCommentRepo.DeleteRatesByCommentID(commentID); err != nil {
+	if err = ru.rateCommentRepo.DeleteRatesByCommentID(commentID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ru *RateCommentUsecase) DeleteCommentsRateByPostID(postID int64) (err error) {
+	if err = ru.rateCommentRepo.DeleteCommentsRateByPostID(postID); err != nil {
 		return err
 	}
 	return nil

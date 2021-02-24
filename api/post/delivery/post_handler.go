@@ -585,6 +585,10 @@ func (ph *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request)
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
+		if err = ph.commentRateUcase.DeleteCommentsRateByPostID(post.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
 		if status, err = ph.postUcase.Delete(post.ID); err != nil {
 			response.Error(w, status, err)
 			return

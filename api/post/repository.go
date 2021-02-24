@@ -68,4 +68,5 @@ type RateCommentRepository interface {
 	GetCommentRatingByID(commentRateID int64) (commentRating *models.CommentRating, status int, err error)
 	GetAuthor(commentRating *models.CommentRating) (status int, err error)
 	DeleteRatesByCommentID(commentID int64) (err error)
+	DeleteCommentsRateByPostID(postID int64) (err error)
 }

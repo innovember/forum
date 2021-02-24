@@ -179,3 +179,24 @@ func (rr *RateCommentDBRepository) DeleteRatesByCommentID(commentID int64) (err 
 	}
 	return nil
 }
+
+func (rr *RateCommentDBRepository) DeleteCommentsRateByPostID(postID int64) (err error) {
+	var (
+		ctx context.Context
+		tx  *sql.Tx
+	)
+	ctx = context.Background()
+	if tx, err = rr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(`DELETE FROM comment_rating
+								WHERE post_id = ?`,
+		postID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
