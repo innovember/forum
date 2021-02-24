@@ -48,10 +48,11 @@ func (rr *RateCommentDBRepository) RateComment(commentID int64, userID int64, vo
 		REPLACE INTO comment_rating(id, user_id,post_id, comment_id,rate)
 		VALUES(
 			(SELECT id FROM comment_rating
-				WHERE user_id = $1 AND comment_id = $2
-			AND post_id = $4),
-			$1,$4,$2,$3)`,
-		userID, commentID, vote, postID); err != nil {
+				WHERE user_id = $1 AND post_id = $2 
+				AND comment_id = $3
+			),
+			$1,$2,$3,$4)`,
+		userID, postID, commentID, vote); err != nil {
 		return 0, err
 	}
 	if rateID, err = result.LastInsertId(); err != nil {
