@@ -68,7 +68,7 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/notifications/delete/", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteNotificationsHandler)))
 	// Images
 	mux.HandleFunc("/api/image/upload", mw.SetHeaders(mw.AuthorizedOnly(ph.UploadImageHandler)))
-	// mux.HandleFunc("/api/image/delete", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteImageHandler)))
+	mux.HandleFunc("/api/image/delete/", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteImageHandler)))
 	mux.Handle("/images/", http.StripPrefix("/images", http.FileServer(http.Dir("./images"))))
 }
 
@@ -884,4 +884,51 @@ func (ph *PostHandler) RateCommentHandlerFunc(w http.ResponseWriter, r *http.Req
 	}
 	response.Success(w, "comment has been rated", http.StatusOK, rating)
 	return
+}
+
+func (ph *PostHandler) DeleteImageHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "DELETE" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+			postID int
+			post   *models.Post
+		)
+		_id := r.URL.Path[len("/api/image/delete/"):]
+		if postID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("post id doesn't exist"))
+			return
+		}
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = ph.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		post, status, err = ph.postUcase.GetPostByID(user.ID, int64(postID))
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		if post.AuthorID != user.ID {
+			response.Error(w, http.StatusForbidden, errors.New("can't delete another user's post's image"))
+			return
+		}
+		fileNameArr := strings.Split(post.ImagePath, "/")
+		fileName := fileNameArr[len(fileNameArr)-1]
+		err = os.Remove(fmt.Sprintf("./images/%s", fileName))
+		if err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = ph.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "post's image has been deleted", status, nil)
+	} else {
+		http.Error(w, "Only DELETE method allowed, return to main page", 405)
+		return
+	}
 }
