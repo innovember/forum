@@ -88,9 +88,12 @@ CREATE TABLE IF NOT EXISTS comment_rating (
 	user_id INTEGER NOT NULL,
 	comment_id INTEGER NOT NULL,
 	rate INTEGER,
+	post_id INTEGER NOT NULL,
 	FOREIGN KEY (comment_id) REFERENCES comments (id) ON
 DELETE CASCADE,
 	FOREIGN KEY(user_id) REFERENCES users (id) ON
+DELETE CASCADE,
+	FOREIGN KEY(post_id) REFERENCES posts (id) ON
 DELETE CASCADE,
 	PRIMARY KEY(id)
 );

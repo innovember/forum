@@ -825,7 +825,7 @@ func (ph *PostHandler) RateCommentHandler(w http.ResponseWriter, r *http.Request
 
 func (ph *PostHandler) RateCommentHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	var (
-		input         models.InputRate
+		input         models.InputCommentRate
 		rating        models.Rating
 		err           error
 		status        int
@@ -850,13 +850,13 @@ func (ph *PostHandler) RateCommentHandlerFunc(w http.ResponseWriter, r *http.Req
 	}
 	switch input.Reaction {
 	case 1:
-		isRatedBefore, err = ph.commentRateUcase.IsRatedBefore(input.ID, user.ID, input.Reaction)
+		isRatedBefore, err = ph.commentRateUcase.IsRatedBefore(input.CommentID, user.ID, input.Reaction)
 		if err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
 		if isRatedBefore {
-			if err = ph.commentRateUcase.DeleteRateFromComment(input.ID, user.ID, input.Reaction); err != nil {
+			if err = ph.commentRateUcase.DeleteRateFromComment(input.CommentID, user.ID, input.Reaction); err != nil {
 				response.Error(w, http.StatusInternalServerError, err)
 				return
 			}
@@ -864,13 +864,13 @@ func (ph *PostHandler) RateCommentHandlerFunc(w http.ResponseWriter, r *http.Req
 			return
 		}
 	case -1:
-		isRatedBefore, err = ph.commentRateUcase.IsRatedBefore(input.ID, user.ID, input.Reaction)
+		isRatedBefore, err = ph.commentRateUcase.IsRatedBefore(input.CommentID, user.ID, input.Reaction)
 		if err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
 		if isRatedBefore {
-			if err = ph.commentRateUcase.DeleteRateFromComment(input.ID, user.ID, input.Reaction); err != nil {
+			if err = ph.commentRateUcase.DeleteRateFromComment(input.CommentID, user.ID, input.Reaction); err != nil {
 				response.Error(w, http.StatusInternalServerError, err)
 				return
 			}
@@ -878,11 +878,11 @@ func (ph *PostHandler) RateCommentHandlerFunc(w http.ResponseWriter, r *http.Req
 			return
 		}
 	}
-	if commentRateID, err = ph.commentRateUcase.RateComment(input.ID, user.ID, input.Reaction); err != nil {
+	if commentRateID, err = ph.commentRateUcase.RateComment(input.CommentID, user.ID, input.Reaction, input.PostID); err != nil {
 		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
-	if rating.Rating, rating.UserRating, err = ph.commentRateUcase.GetCommentRating(input.ID, user.ID); err != nil {
+	if rating.Rating, rating.UserRating, err = ph.commentRateUcase.GetCommentRating(input.CommentID, user.ID); err != nil {
 		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -890,7 +890,7 @@ func (ph *PostHandler) RateCommentHandlerFunc(w http.ResponseWriter, r *http.Req
 		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
-	if comment, status, err = ph.commentUcase.GetCommentByID(user.ID, input.ID); err != nil {
+	if comment, status, err = ph.commentUcase.GetCommentByID(user.ID, input.CommentID); err != nil {
 		response.Error(w, status, err)
 		return
 	}

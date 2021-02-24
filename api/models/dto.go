@@ -35,8 +35,14 @@ type InputFindComment struct {
 }
 
 type InputRate struct {
-	ID       int64 `json:"id"`       // postID or commentID
+	ID       int64 `json:"id"`       // postID
 	Reaction int   `json:"reaction"` // 1 or -1
+}
+
+type InputCommentRate struct {
+	CommentID int64 `json:"commentID"` // commentID
+	PostID    int64 `json:"postID"`    // postID
+	Reaction  int   `json:"reaction"`  // 1 or -1
 }
 
 type InputFilterPost struct {

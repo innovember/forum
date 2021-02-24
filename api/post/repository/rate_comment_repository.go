@@ -37,7 +37,7 @@ func (rr *RateCommentDBRepository) GetCommentRating(commentID int64, userID int6
 
 }
 
-func (rr *RateCommentDBRepository) RateComment(commentID int64, userID int64, vote int) (int64, error) {
+func (rr *RateCommentDBRepository) RateComment(commentID int64, userID int64, vote int, postID int64) (int64, error) {
 	var (
 		result       sql.Result
 		rowsAffected int64
@@ -45,12 +45,13 @@ func (rr *RateCommentDBRepository) RateComment(commentID int64, userID int64, vo
 		rateID       int64
 	)
 	if result, err = rr.dbConn.Exec(`
-		REPLACE INTO comment_rating(id, user_id, comment_id,rate)
+		REPLACE INTO comment_rating(id, user_id, comment_id,rate,post_id)
 		VALUES(
 			(SELECT id FROM comment_rating
-				WHERE user_id = $1 AND comment_id = $2),
-			$1,$2,$3)`,
-		userID, commentID, vote); err != nil {
+				WHERE user_id = $1 AND comment_id = $2
+			AND post_id = $4),
+			$1,$2,$3,$4)`,
+		userID, commentID, vote, postID); err != nil {
 		return 0, err
 	}
 	if rateID, err = result.LastInsertId(); err != nil {
@@ -131,7 +132,7 @@ func (rr *RateCommentDBRepository) GetCommentRatingByID(commentRateID int64) (co
 		FROM comment_rating
 		WHERE id = ?
 		`, commentRateID).Scan(&cr.ID, &cr.UserID,
-		&cr.CommentID, &cr.Rate); err != nil {
+		&cr.CommentID, &cr.Rate, &cr.PostID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound, errors.New("cant find comment rating")
 		}

@@ -52,7 +52,7 @@ type NotificationUsecase interface {
 }
 
 type RateCommentUsecase interface {
-	RateComment(commentID int64, userID int64, vote int) (int64, error)
+	RateComment(commentID int64, userID int64, vote int, postID int64) (int64, error)
 	GetCommentRating(commentID int64, userID int64) (rating int, userRating int, err error)
 	IsRatedBefore(commentID int64, userID int64, vote int) (bool, error)
 	DeleteRateFromComment(commentID int64, userID int64, vote int) error

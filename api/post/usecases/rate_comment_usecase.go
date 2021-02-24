@@ -12,8 +12,8 @@ func NewRateCommentUsecase(repo post.RateCommentRepository) post.RateCommentUsec
 	return &RateCommentUsecase{rateCommentRepo: repo}
 }
 
-func (ru *RateCommentUsecase) RateComment(commentID int64, userID int64, vote int) (rateID int64, err error) {
-	if rateID, err = ru.rateCommentRepo.RateComment(commentID, userID, vote); err != nil {
+func (ru *RateCommentUsecase) RateComment(commentID int64, userID int64, vote int, postID int64) (rateID int64, err error) {
+	if rateID, err = ru.rateCommentRepo.RateComment(commentID, userID, vote, postID); err != nil {
 		return 0, err
 	}
 	return rateID, nil

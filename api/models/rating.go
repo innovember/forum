@@ -18,5 +18,6 @@ type CommentRating struct {
 	UserID    int64 `json:"userID"`
 	CommentID int64 `json:"commentID"`
 	Rate      int   `json:"rate"`
+	PostID    int64 `json:"postID"`
 	Author    *User `json:"author"`
 }
