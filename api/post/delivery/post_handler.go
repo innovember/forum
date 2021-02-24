@@ -238,6 +238,7 @@ func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Reques
 			RateID:        rateID,
 			CommentID:     0,
 			CommentRateID: 0,
+			ReceiverID:    post.AuthorID,
 		}
 		if _, status, err = ph.notificationUcase.Create(&notification); err != nil {
 			response.Error(w, status, err)
@@ -421,6 +422,7 @@ func (ph *PostHandler) CreateCommentHandlerFunc(w http.ResponseWriter, r *http.R
 			RateID:        0,
 			CommentID:     newComment.ID,
 			CommentRateID: 0,
+			ReceiverID:    post.AuthorID,
 		}
 		if _, status, err = ph.notificationUcase.Create(&notification); err != nil {
 			response.Error(w, status, err)
@@ -575,7 +577,7 @@ func (ph *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request)
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		if err = ph.commentUcase.DeleteCommentByPostID(post.ID); err != nil {
+		if err = ph.commentUcase.DeleteCommentsByPostID(post.ID); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -898,6 +900,7 @@ func (ph *PostHandler) RateCommentHandlerFunc(w http.ResponseWriter, r *http.Req
 			CommentRateID: commentRateID,
 			CommentID:     comment.ID,
 			RateID:        0,
+			ReceiverID:    comment.AuthorID,
 		}
 		if _, status, err = ph.notificationUcase.Create(&notification); err != nil {
 			response.Error(w, status, err)

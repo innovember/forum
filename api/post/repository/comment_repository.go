@@ -210,7 +210,7 @@ func (cr *CommentDBRepository) Delete(commentID int64) (err error) {
 	return nil
 }
 
-func (cr *CommentDBRepository) DeleteCommentByPostID(postID int64) (err error) {
+func (cr *CommentDBRepository) DeleteCommentsByPostID(postID int64) (err error) {
 	var (
 		ctx context.Context
 		tx  *sql.Tx

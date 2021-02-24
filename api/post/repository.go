@@ -47,7 +47,7 @@ type CommentRepository interface {
 	Update(comment *models.Comment) (editedComment *models.Comment, status int, err error)
 	GetCommentByID(userID, commentID int64) (comment *models.Comment, status int, err error)
 	Delete(commentID int64) (err error)
-	DeleteCommentByPostID(postID int64) (err error)
+	DeleteCommentsByPostID(postID int64) (err error)
 }
 
 type NotificationRepository interface {
