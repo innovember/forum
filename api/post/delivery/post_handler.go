@@ -68,6 +68,7 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/notifications/delete/", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteNotificationsHandler)))
 	// Images
 	mux.HandleFunc("/api/image/upload", mw.SetHeaders(mw.AuthorizedOnly(ph.UploadImageHandler)))
+	// mux.HandleFunc("/api/image/delete", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteImageHandler)))
 	mux.Handle("/images/", http.StripPrefix("/images", http.FileServer(http.Dir("./images"))))
 }
 
@@ -186,35 +187,18 @@ func (ph *PostHandler) RatePostHandlerFunc(w http.ResponseWriter, r *http.Reques
 		response.Error(w, status, err)
 		return
 	}
-	switch input.Reaction {
-	case 1:
-		isRatedBefore, err = ph.rateUcase.IsRatedBefore(input.ID, user.ID, input.Reaction)
-		if err != nil {
+	isRatedBefore, err = ph.rateUcase.IsRatedBefore(input.ID, user.ID, input.Reaction)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	if isRatedBefore {
+		if err = ph.rateUcase.DeleteRateFromPost(input.ID, user.ID, input.Reaction); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		if isRatedBefore {
-			if err = ph.rateUcase.DeleteRateFromPost(input.ID, user.ID, input.Reaction); err != nil {
-				response.Error(w, http.StatusInternalServerError, err)
-				return
-			}
-			response.Success(w, "rate cancelled due to re-voting", http.StatusOK, nil)
-			return
-		}
-	case -1:
-		isRatedBefore, err = ph.rateUcase.IsRatedBefore(input.ID, user.ID, input.Reaction)
-		if err != nil {
-			response.Error(w, http.StatusInternalServerError, err)
-			return
-		}
-		if isRatedBefore {
-			if err = ph.rateUcase.DeleteRateFromPost(input.ID, user.ID, input.Reaction); err != nil {
-				response.Error(w, http.StatusInternalServerError, err)
-				return
-			}
-			response.Success(w, "rate cancelled due to re-voting", http.StatusOK, nil)
-			return
-		}
+		response.Success(w, "rate cancelled due to re-voting", http.StatusOK, nil)
+		return
 	}
 	if rateID, err = ph.rateUcase.RatePost(input.ID, user.ID, input.Reaction); err != nil {
 		response.Error(w, http.StatusInternalServerError, err)
@@ -852,35 +836,18 @@ func (ph *PostHandler) RateCommentHandlerFunc(w http.ResponseWriter, r *http.Req
 		response.Error(w, status, err)
 		return
 	}
-	switch input.Reaction {
-	case 1:
-		isRatedBefore, err = ph.commentRateUcase.IsRatedBefore(input.CommentID, user.ID, input.Reaction)
-		if err != nil {
+	isRatedBefore, err = ph.commentRateUcase.IsRatedBefore(input.CommentID, user.ID, input.Reaction)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	if isRatedBefore {
+		if err = ph.commentRateUcase.DeleteRateFromComment(input.CommentID, user.ID, input.Reaction); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		if isRatedBefore {
-			if err = ph.commentRateUcase.DeleteRateFromComment(input.CommentID, user.ID, input.Reaction); err != nil {
-				response.Error(w, http.StatusInternalServerError, err)
-				return
-			}
-			response.Success(w, "rate cancelled due to re-voting", http.StatusOK, nil)
-			return
-		}
-	case -1:
-		isRatedBefore, err = ph.commentRateUcase.IsRatedBefore(input.CommentID, user.ID, input.Reaction)
-		if err != nil {
-			response.Error(w, http.StatusInternalServerError, err)
-			return
-		}
-		if isRatedBefore {
-			if err = ph.commentRateUcase.DeleteRateFromComment(input.CommentID, user.ID, input.Reaction); err != nil {
-				response.Error(w, http.StatusInternalServerError, err)
-				return
-			}
-			response.Success(w, "rate cancelled due to re-voting", http.StatusOK, nil)
-			return
-		}
+		response.Success(w, "rate cancelled due to re-voting", http.StatusOK, nil)
+		return
 	}
 	if commentRateID, err = ph.commentRateUcase.RateComment(input.CommentID, user.ID, input.Reaction, input.PostID); err != nil {
 		response.Error(w, http.StatusInternalServerError, err)

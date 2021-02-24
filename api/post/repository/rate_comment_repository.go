@@ -45,12 +45,12 @@ func (rr *RateCommentDBRepository) RateComment(commentID int64, userID int64, vo
 		rateID       int64
 	)
 	if result, err = rr.dbConn.Exec(`
-		REPLACE INTO comment_rating(id, user_id, comment_id,rate,post_id)
+		REPLACE INTO comment_rating(id, user_id,post_id, comment_id,rate)
 		VALUES(
 			(SELECT id FROM comment_rating
 				WHERE user_id = $1 AND comment_id = $2
 			AND post_id = $4),
-			$1,$2,$3,$4)`,
+			$1,$4,$2,$3)`,
 		userID, commentID, vote, postID); err != nil {
 		return 0, err
 	}
@@ -131,8 +131,8 @@ func (rr *RateCommentDBRepository) GetCommentRatingByID(commentRateID int64) (co
 		SELECT *
 		FROM comment_rating
 		WHERE id = ?
-		`, commentRateID).Scan(&cr.ID, &cr.UserID,
-		&cr.CommentID, &cr.Rate, &cr.PostID); err != nil {
+		`, commentRateID).Scan(&cr.ID, &cr.UserID, &cr.PostID,
+		&cr.CommentID, &cr.Rate); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound, errors.New("cant find comment rating")
 		}
