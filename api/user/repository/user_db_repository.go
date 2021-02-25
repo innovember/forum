@@ -31,10 +31,13 @@ func (ur *UserDBRepository) Create(user *models.User) (status int, err error) {
 			email,
 			created_at,
 			last_active,
-			session_id
+			session_id,
+			role
 		)
-	VALUES (?, ?, ?, ?, ?,?)`,
-		user.Username, user.Password, user.Email, now, now, user.SessionID,
+	VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		user.Username, user.Password, user.Email,
+		now, now, user.SessionID,
+		user.Role,
 	); err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -137,7 +140,10 @@ func (ur *UserDBRepository) ValidateSession(sessionValue string) (*models.User, 
 		err  error
 	)
 	if err = ur.dbConn.QueryRow(`
-	SELECT id,username,email,created_at,last_active FROM users WHERE session_id = ?`, sessionValue).Scan(&user.ID, &user.Username, &user.Email, &user.CreatedAt, &user.LastActive); err != nil {
+	SELECT id,username,email,created_at,last_active,role FROM users WHERE session_id = ?`, sessionValue,
+	).Scan(&user.ID, &user.Username,
+		&user.Email, &user.CreatedAt,
+		&user.LastActive, &user.Role); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound, errors.New("user not authorized")
 		}
@@ -167,9 +173,10 @@ func (ur *UserDBRepository) GetUserByID(userID int64) (*models.User, error) {
 		err  error
 	)
 	if err = ur.dbConn.QueryRow(`
-	SELECT id,username,email,created_at,last_active
+	SELECT id,username,email,created_at,last_active,role
 	FROM users WHERE id = ?`, userID).Scan(&user.ID, &user.Username,
-		&user.Email, &user.CreatedAt, &user.LastActive); err != nil {
+		&user.Email, &user.CreatedAt,
+		&user.LastActive, &user.Role); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("cant find user with such id")
 		}

@@ -5,18 +5,30 @@ import (
 )
 
 const (
-	APIPortDev        = "8081"
-	APIURLDev         = "localhost:" + APIPortDev
-	DBDriver          = "sqlite3"
-	DBPath            = "./db"
-	ImagesPath        = "./images"
-	MaxImageSize      = 20 * 1024 * 1024
-	DBFileName        = "forum.db"
-	DBSchema          = "schema.sql"
+	// URI
+	APIPortDev    = "8081"
+	APIURLDev     = "localhost:" + APIPortDev
+	ClientURLDev  = "http://localhost:3000"
+	ClientURLProd = "https://forume-react.herokuapp.com"
+
+	// Session
 	SessionCookieName = "forumSecretKey"
 	SessionExpiration = 1 * time.Hour
-	ClientURLDev      = "http://localhost:3000"
-	ClientURLProd     = "https://forume-react.herokuapp.com"
+
+	// User roles
+	RoleGuest     = 0
+	RoleModerator = 1
+	RoleAdmin     = 2
+
+	// Database
+	DBDriver   = "sqlite3"
+	DBPath     = "./db"
+	DBFileName = "forum.db"
+	DBSchema   = "schema.sql"
+
+	// Images
+	ImagesPath   = "./images"
+	MaxImageSize = 20 * 1024 * 1024
 )
 
 var (

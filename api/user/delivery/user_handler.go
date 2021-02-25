@@ -10,6 +10,7 @@ import (
 	"github.com/innovember/forum/api/security"
 	"github.com/innovember/forum/api/user"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
@@ -46,6 +47,7 @@ func (uh *UserHandler) CreateUserHandlerFunc(w http.ResponseWriter, r *http.Requ
 		hashedPassword string
 		status         int
 		err            error
+		adminAuthToken string = os.Getenv("ADMIN_AUTH_TOKEN")
 	)
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
@@ -60,6 +62,10 @@ func (uh *UserHandler) CreateUserHandlerFunc(w http.ResponseWriter, r *http.Requ
 		Password:  hashedPassword,
 		Email:     input.Email,
 		SessionID: "",
+		Role:      config.RoleGuest,
+	}
+	if adminAuthToken != "" && adminAuthToken == input.AdminAuthToken {
+		user.Role = config.RoleAdmin
 	}
 	if status, err = uh.userUcase.Create(&user); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
