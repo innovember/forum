@@ -6,9 +6,10 @@ type InputUserSignIn struct {
 }
 
 type InputUserSignUp struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Email    string `json:"email"`
+	Username       string `json:"username"`
+	Password       string `json:"password"`
+	Email          string `json:"email"`
+	AdminAuthToken string `json:"adminAuthToken"`
 }
 
 type InputPost struct {

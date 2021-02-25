@@ -8,4 +8,5 @@ type User struct {
 	CreatedAt  int64  `json:"createdAt,omitempty"`
 	LastActive int64  `json:"lastActive,omitempty"`
 	SessionID  string `json:"sessionID,omitempty"`
+	Role       int    `json:"role"`
 }
