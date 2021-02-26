@@ -77,3 +77,24 @@ func (uu *UserUsecase) UpdateActivity(userID int64) (err error) {
 	}
 	return nil
 }
+
+func (uu *UserUsecase) CreateRoleRequest(userID int64) (err error) {
+	if err = uu.userRepo.CreateRoleRequest(userID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (uu *UserUsecase) GetRoleRequestByUserID(userID int64) (request *models.RoleRequest, err error) {
+	if request, err = uu.userRepo.GetRoleRequestByUserID(userID); err != nil {
+		return nil, err
+	}
+	return request, nil
+}
+
+func (uu *UserUsecase) DeleteRoleRequest(userID int64) (err error) {
+	if err = uu.userRepo.DeleteRoleRequest(userID); err != nil {
+		return err
+	}
+	return nil
+}

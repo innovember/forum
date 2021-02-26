@@ -14,4 +14,7 @@ type UserUsecase interface {
 	ValidateSession(sessionValue string) (user *models.User, status int, err error)
 	CheckSessionByUsername(username string) (status int, err error)
 	UpdateActivity(userID int64) (err error)
+	CreateRoleRequest(userID int64) (err error)
+	GetRoleRequestByUserID(userID int64) (request *models.RoleRequest, err error)
+	DeleteRoleRequest(userID int64) (err error)
 }

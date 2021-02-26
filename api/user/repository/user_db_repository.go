@@ -206,3 +206,73 @@ func (ur *UserDBRepository) UpdateActivity(userID int64) (err error) {
 	}
 	return nil
 }
+
+func (ur *UserDBRepository) CreateRoleRequest(userID int64) (err error) {
+	var (
+		ctx context.Context
+		tx  *sql.Tx
+		now int64 = time.Now().Unix()
+	)
+	ctx = context.Background()
+	if tx, err = ur.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(`INSERT INTO role_requests(
+						user_id, created_at, pending)
+						VALUES (
+							?,?,?
+						)
+		`, userID, now, 1); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ur *UserDBRepository) GetRoleRequestByUserID(userID int64) (*models.RoleRequest, error) {
+	var (
+		ctx context.Context
+		tx  *sql.Tx
+		err error
+		r   models.RoleRequest
+	)
+	ctx = context.Background()
+	if tx, err = ur.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return nil, err
+	}
+	if err = tx.QueryRow(`SELECT *
+						  FROM role_requests
+						  WHERE user_id = ?
+	`, userID).Scan(&r.ID, &r.UserID, &r.CreatedAt, &r.Pending); err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func (ur *UserDBRepository) DeleteRoleRequest(userID int64) (err error) {
+	var (
+		ctx context.Context
+		tx  *sql.Tx
+	)
+	ctx = context.Background()
+	if tx, err = ur.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(`DELETE FROM role_requests
+						 WHERE user_id = ?
+		`, userID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
