@@ -18,3 +18,8 @@ type UserUsecase interface {
 	GetRoleRequestByUserID(userID int64) (request *models.RoleRequest, err error)
 	DeleteRoleRequest(userID int64) (err error)
 }
+
+type AdminUsecase interface {
+	UpgradeRole(userID int64) (err error)
+	GetAllRoleRequests() (roleRequests []models.RoleRequest, err error)
+}
