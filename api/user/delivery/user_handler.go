@@ -41,9 +41,9 @@ func (uh *UserHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/request/delete", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteRoleRequest)))
 	mux.HandleFunc("/api/request", mw.SetHeaders(mw.AuthorizedOnly(uh.GetRoleRequest)))
 	// // admin
-	// mux.HandleFunc("/api/admin/requests", mw.SetHeaders(mw.AuthorizedOnly(uh.GetRoleRequests)))
-	// mux.HandleFunc("/api/admin/request/dismiss/", mw.SetHeaders(mw.AuthorizedOnly(uh.DismissRoleRequest)))
-	// mux.HandleFunc("/api/admin/request/accept/", mw.SetHeaders(mw.AuthorizedOnly(uh.AcceptRoleRequest)))
+	mux.HandleFunc("/api/admin/requests", mw.SetHeaders(mw.AuthorizedOnly(uh.GetRoleRequests)))
+	mux.HandleFunc("/api/admin/request/dismiss/", mw.SetHeaders(mw.AuthorizedOnly(uh.DismissRoleRequest)))
+	mux.HandleFunc("/api/admin/request/accept/", mw.SetHeaders(mw.AuthorizedOnly(uh.AcceptRoleRequest)))
 }
 
 func (uh *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -319,6 +319,115 @@ func (uh *UserHandler) GetRoleRequest(w http.ResponseWriter, r *http.Request) {
 		response.Success(w, "get role request by user id", status, roleRequest)
 	} else {
 		http.Error(w, "Only GET method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) GetRoleRequests(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		var (
+			status       int
+			err          error
+			cookie       *http.Cookie
+			user         *models.User
+			roleRequests []models.RoleRequest
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.ID != config.RoleAdmin {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
+			return
+		}
+		if roleRequests, err = uh.adminUcase.GetAllRoleRequests(); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "get role requests", status, roleRequests)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) DismissRoleRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "DELETE" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+			userID int
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.ID != config.RoleAdmin {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
+			return
+		}
+		_id := r.URL.Path[len("/api/admin/request/dismiss/"):]
+		if userID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("user id doesn't exist"))
+			return
+		}
+		if err = uh.adminUcase.DeleteRoleRequest(int64(userID)); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "role request has been removed", status, nil)
+	} else {
+		http.Error(w, "Only DELETE method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) AcceptRoleRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "PUT" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+			userID int
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.ID != config.RoleAdmin {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
+			return
+		}
+		_id := r.URL.Path[len("/api/admin/request/accept/"):]
+		if userID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("user id doesn't exist"))
+			return
+		}
+		if err = uh.adminUcase.UpgradeRole(int64(userID)); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "role request has been accepted", status, nil)
+	} else {
+		http.Error(w, "Only PUT method allowed, return to main page", 405)
 		return
 	}
 }
