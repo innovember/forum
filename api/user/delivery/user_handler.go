@@ -16,20 +16,34 @@ import (
 )
 
 type UserHandler struct {
-	userUcase user.UserUsecase
+	userUcase  user.UserUsecase
+	adminUcase user.AdminUsecase
 }
 
-func NewUserHandler(userUcase user.UserUsecase) *UserHandler {
-	return &UserHandler{userUcase: userUcase}
+func NewUserHandler(userUcase user.UserUsecase, adminUcase user.AdminUsecase) *UserHandler {
+	return &UserHandler{
+		userUcase:  userUcase,
+		adminUcase: adminUcase,
+	}
 }
 
 func (uh *UserHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareManager) {
+	// auth
 	mux.HandleFunc("/api/auth/signup", mw.SetHeaders(uh.CreateUserHandler))
-	mux.HandleFunc("/api/users", mw.SetHeaders(uh.GetAllUsers))
 	mux.HandleFunc("/api/auth/signin", mw.SetHeaders(uh.SignIn))
 	mux.HandleFunc("/api/auth/signout", mw.SetHeaders(mw.AuthorizedOnly(uh.SignOut)))
 	mux.HandleFunc("/api/auth/me", mw.SetHeaders(mw.AuthorizedOnly(uh.Me)))
+	// user's info
+	mux.HandleFunc("/api/users", mw.SetHeaders(uh.GetAllUsers))
 	mux.HandleFunc("/api/user/", mw.SetHeaders(uh.GetUserByID))
+	// user's role
+	mux.HandleFunc("/api/request/add", mw.SetHeaders(mw.AuthorizedOnly(uh.CreateRoleRequest)))
+	mux.HandleFunc("/api/request/delete", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteRoleRequest)))
+	mux.HandleFunc("/api/request", mw.SetHeaders(mw.AuthorizedOnly(uh.GetRoleRequest)))
+	// // admin
+	// mux.HandleFunc("/api/admin/requests", mw.SetHeaders(mw.AuthorizedOnly(uh.GetRoleRequests)))
+	// mux.HandleFunc("/api/admin/request/dismiss/", mw.SetHeaders(mw.AuthorizedOnly(uh.DismissRoleRequest)))
+	// mux.HandleFunc("/api/admin/request/accept/", mw.SetHeaders(mw.AuthorizedOnly(uh.AcceptRoleRequest)))
 }
 
 func (uh *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -218,6 +232,91 @@ func (uh *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		response.Success(w, "fetch user by id", http.StatusOK, user)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) CreateRoleRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if err = uh.userUcase.CreateRoleRequest(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "new role request created", status, nil)
+	} else {
+		http.Error(w, "Only POST method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) DeleteRoleRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "DELETE" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if err = uh.userUcase.DeleteRoleRequest(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "role request has been removed", status, nil)
+	} else {
+		http.Error(w, "Only DELETE method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) GetRoleRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		var (
+			status      int
+			err         error
+			cookie      *http.Cookie
+			user        *models.User
+			roleRequest *models.RoleRequest
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if roleRequest, err = uh.userUcase.GetRoleRequestByUserID(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "get role request by user id", status, roleRequest)
 	} else {
 		http.Error(w, "Only GET method allowed, return to main page", 405)
 		return

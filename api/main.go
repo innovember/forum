@@ -37,34 +37,44 @@ func Run() {
 		log.Fatal("Session reset", err)
 	}
 	session.Init(dbConn)
-	//Repository
+	// User repositories
 	userRepository := userRepo.NewUserDBRepository(dbConn)
+	adminRepository := userRepo.NewAdminDBRepository(dbConn)
+
+	// Post repositories
 	postRepository := postRepo.NewPostDBRepository(dbConn)
 	postRateRepository := postRepo.NewRateDBRepository(dbConn)
 	categoryRepository := postRepo.NewCategoryDBRepository(dbConn)
 	commentRepository := postRepo.NewCommentDBRepository(dbConn)
 	notificationRepository := postRepo.NewNotificationDBRepository(dbConn)
 	commentRateRepository := postRepo.NewRateCommentDBRepository(dbConn)
-	//Usecases
+
+	// User usecases
 	userUcase := userUsecase.NewUserUsecase(userRepository)
+	adminUcase := userUsecase.NewAdminUsecase(adminRepository)
+
+	// Post usecases
 	postUcase := postUsecase.NewPostUsecase(postRepository)
 	postRateUcase := postUsecase.NewRateUsecase(postRateRepository)
 	categoryUcase := postUsecase.NewCategoryUsecase(categoryRepository)
 	commentUcase := postUsecase.NewCommentUsecase(commentRepository)
 	notificationUcase := postUsecase.NewNotificationUsecase(notificationRepository)
 	commentRateUcase := postUsecase.NewRateCommentUsecase(commentRateRepository)
+
 	//Middleware
 	mux := http.NewServeMux()
 	mw := middleware.NewMiddlewareManager()
-	//Delivery
-	userHandler := userHandler.NewUserHandler(userUcase)
+	// User delivery
+	userHandler := userHandler.NewUserHandler(userUcase, adminUcase)
 	userHandler.Configure(mux, mw)
 
+	// Post delivery
 	postHandler := postHandler.NewPostHandler(postUcase, userUcase,
 		postRateUcase, categoryUcase,
 		commentUcase, notificationUcase,
 		commentRateUcase)
 	postHandler.Configure(mux, mw)
+
 	port := config.APIPortDev
 	if port == "" {
 		port = getPort()
