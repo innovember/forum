@@ -23,4 +23,5 @@ type UserRepository interface {
 type AdminRepository interface {
 	UpgradeRole(userID int64) (err error)
 	GetAllRoleRequests() (roleRequests []models.RoleRequest, err error)
+	DeleteRoleRequest(userID int64) (err error)
 }

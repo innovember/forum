@@ -26,3 +26,10 @@ func (au *AdminUsecase) GetAllRoleRequests() (roleRequests []models.RoleRequest,
 	}
 	return roleRequests, nil
 }
+
+func (au *AdminUsecase) DeleteRoleRequest(userID int64) (err error) {
+	if err = au.adminRepo.DeleteRoleRequest(userID); err != nil {
+		return err
+	}
+	return nil
+}

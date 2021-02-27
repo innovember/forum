@@ -71,3 +71,24 @@ func (ar *AdminDBRepository) GetAllRoleRequests() (roleRequests []models.RoleReq
 	}
 	return roleRequests, nil
 }
+
+func (ar *AdminDBRepository) DeleteRoleRequest(userID int64) (err error) {
+	var (
+		ctx context.Context
+		tx  *sql.Tx
+	)
+	ctx = context.Background()
+	if tx, err = ar.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(`DELETE FROM role_requests
+						 WHERE user_id = ?
+		`, userID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
