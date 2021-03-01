@@ -8,7 +8,7 @@ const (
 	// URI
 	APIPortDev    = "8081"
 	APIURLDev     = "localhost:" + APIPortDev
-	ClientURLDev  = "http://localhost:3000"
+	ClientURLDev  = "https://localhost:3000"
 	ClientURLProd = "https://forume-react.herokuapp.com"
 
 	// Session

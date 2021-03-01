@@ -65,7 +65,10 @@ func Run() {
 	mux := http.NewServeMux()
 	mw := middleware.NewMiddlewareManager()
 	// User delivery
-	userHandler := userHandler.NewUserHandler(userUcase, adminUcase)
+	userHandler := userHandler.NewUserHandler(userUcase, adminUcase,
+		postUcase, postRateUcase,
+		categoryUcase, commentUcase,
+		notificationUcase, commentRateUcase)
 	userHandler.Configure(mux, mw)
 
 	// Post delivery

@@ -6,6 +6,7 @@ import (
 	"github.com/innovember/forum/api/config"
 	"github.com/innovember/forum/api/middleware"
 	"github.com/innovember/forum/api/models"
+	"github.com/innovember/forum/api/post"
 	"github.com/innovember/forum/api/response"
 	"github.com/innovember/forum/api/security"
 	"github.com/innovember/forum/api/user"
@@ -16,14 +17,34 @@ import (
 )
 
 type UserHandler struct {
-	userUcase  user.UserUsecase
-	adminUcase user.AdminUsecase
+	userUcase         user.UserUsecase
+	adminUcase        user.AdminUsecase
+	postUcase         post.PostUsecase
+	rateUcase         post.RateUsecase
+	categoryUcase     post.CategoryUsecase
+	commentUcase      post.CommentUsecase
+	notificationUcase post.NotificationUsecase
+	commentRateUcase  post.RateCommentUsecase
 }
 
-func NewUserHandler(userUcase user.UserUsecase, adminUcase user.AdminUsecase) *UserHandler {
+func NewUserHandler(
+	userUcase user.UserUsecase,
+	adminUcase user.AdminUsecase,
+	postUcase post.PostUsecase,
+	rateUcase post.RateUsecase,
+	categoryUcase post.CategoryUsecase,
+	commentUcase post.CommentUsecase,
+	notificationUcase post.NotificationUsecase,
+	commentRateUcase post.RateCommentUsecase) *UserHandler {
 	return &UserHandler{
-		userUcase:  userUcase,
-		adminUcase: adminUcase,
+		userUcase:         userUcase,
+		adminUcase:        adminUcase,
+		postUcase:         postUcase,
+		rateUcase:         rateUcase,
+		categoryUcase:     categoryUcase,
+		commentUcase:      commentUcase,
+		notificationUcase: notificationUcase,
+		commentRateUcase:  commentRateUcase,
 	}
 }
 
@@ -40,10 +61,29 @@ func (uh *UserHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/request/add", mw.SetHeaders(mw.AuthorizedOnly(uh.CreateRoleRequest)))
 	mux.HandleFunc("/api/request/delete", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteRoleRequest)))
 	mux.HandleFunc("/api/request", mw.SetHeaders(mw.AuthorizedOnly(uh.GetRoleRequest)))
-	// // admin
+	// admin
 	mux.HandleFunc("/api/admin/requests", mw.SetHeaders(mw.AuthorizedOnly(uh.GetRoleRequests)))
 	mux.HandleFunc("/api/admin/request/dismiss/", mw.SetHeaders(mw.AuthorizedOnly(uh.DismissRoleRequest)))
 	mux.HandleFunc("/api/admin/request/accept/", mw.SetHeaders(mw.AuthorizedOnly(uh.AcceptRoleRequest)))
+
+	// mux.HandleFunc("/api/admin/post/reports", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllReports)))
+	// mux.HandleFunc("/api/admin/post/report/dismiss/", mw.SetHeaders(mw.AuthorizedOnly(uh.DismissPostReport)))
+	// mux.HandleFunc("/api/admin/post/report/accept/", mw.SetHeaders(mw.AuthorizedOnly(uh.AcceptPostReport)))
+
+	mux.HandleFunc("/api/admin/post/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeletePostByAdmin)))
+	mux.HandleFunc("/api/admin/comment/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteCommentByAdmin)))
+
+	// mux.HandleFunc("/api/admin/moderators", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllModerators)))
+	// mux.HandleFunc("/api/admin/demote/moderator/", mw.SetHeaders(mw.AuthorizedOnly(uh.DemoteModerator)))
+
+	// mux.HandleFunc("/api/admin/categories", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllCategories)))
+	// mux.HandleFunc("/api/admin/category/add", mw.SetHeaders(mw.AuthorizedOnly(uh.CreateNewCategory)))
+	// mux.HandleFunc("/api/admin/category/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteCategory)))
+
+	// moderator
+	// mux.HandleFunc("/api/moderator/reports", mw.SetHeaders(mw.AuthorizedOnly(uh.MyReports)))
+	// mux.HandleFunc("/api/moderator/report/post", mw.SetHeaders(mw.AuthorizedOnly(uh.CreatePostReport)))
+	mux.HandleFunc("/api/moderator/post/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeletePostByModerator)))
 }
 
 func (uh *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -428,6 +468,185 @@ func (uh *UserHandler) AcceptRoleRequest(w http.ResponseWriter, r *http.Request)
 		response.Success(w, "role request has been accepted", status, nil)
 	} else {
 		http.Error(w, "Only PUT method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) DeletePostByAdmin(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "DELETE" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+			postID int
+			post   *models.Post
+		)
+		_id := r.URL.Path[len("/api/admin/post/delete/"):]
+		if postID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("post id doesn't exist"))
+			return
+		}
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		post, status, err = uh.postUcase.GetPostByID(user.ID, int64(postID))
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		if post.AuthorID != user.ID {
+			response.Error(w, http.StatusForbidden, errors.New("can't delete another user's post"))
+			return
+		}
+		if err = uh.categoryUcase.DeleteFromPostCategoriesBridge(post.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.rateUcase.DeleteRatesByPostID(post.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.commentUcase.DeleteCommentsByPostID(post.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.notificationUcase.DeleteNotificationsByPostID(post.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.commentRateUcase.DeleteCommentsRateByPostID(post.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if status, err = uh.postUcase.Delete(post.ID); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "post has been deleted", status, nil)
+	} else {
+		http.Error(w, "Only DELETE method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) DeleteCommentByAdmin(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "DELETE" {
+		var (
+			status    int
+			err       error
+			cookie    *http.Cookie
+			user      *models.User
+			commentID int
+			comment   *models.Comment
+		)
+		_id := r.URL.Path[len("/api/admin/comment/delete/"):]
+		if commentID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("comment id doesn't exist"))
+			return
+		}
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if comment, status, err = uh.commentUcase.GetCommentByID(user.ID, int64(commentID)); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if comment.AuthorID != user.ID {
+			response.Error(w, http.StatusForbidden, errors.New("can't delete another user's comment"))
+			return
+		}
+		if err = uh.notificationUcase.DeleteNotificationsByCommentID(comment.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.commentRateUcase.DeleteRatesByCommentID(comment.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.commentUcase.Delete(comment.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "comment has been deleted", status, nil)
+	} else {
+		http.Error(w, "Only DELETE method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) DeletePostByModerator(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "DELETE" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+			postID int
+			post   *models.Post
+		)
+		_id := r.URL.Path[len("/api/moderator/post/delete/"):]
+		if postID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("post id doesn't exist"))
+			return
+		}
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		post, status, err = uh.postUcase.GetPostByID(user.ID, int64(postID))
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		if post.AuthorID != user.ID {
+			response.Error(w, http.StatusForbidden, errors.New("can't delete another user's post"))
+			return
+		}
+		if err = uh.categoryUcase.DeleteFromPostCategoriesBridge(post.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.rateUcase.DeleteRatesByPostID(post.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.commentUcase.DeleteCommentsByPostID(post.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.notificationUcase.DeleteNotificationsByPostID(post.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.commentRateUcase.DeleteCommentsRateByPostID(post.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if status, err = uh.postUcase.Delete(post.ID); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "post has been deleted", status, nil)
+	} else {
+		http.Error(w, "Only DELETE method allowed, return to main page", 405)
 		return
 	}
 }
