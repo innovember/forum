@@ -492,13 +492,13 @@ func (uh *UserHandler) DeletePostByAdmin(w http.ResponseWriter, r *http.Request)
 			response.Error(w, status, err)
 			return
 		}
+		if user.ID != config.RoleAdmin {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
+			return
+		}
 		post, status, err = uh.postUcase.GetPostByID(user.ID, int64(postID))
 		if err != nil {
 			response.Error(w, http.StatusBadRequest, err)
-			return
-		}
-		if post.AuthorID != user.ID {
-			response.Error(w, http.StatusForbidden, errors.New("can't delete another user's post"))
 			return
 		}
 		if err = uh.categoryUcase.DeleteFromPostCategoriesBridge(post.ID); err != nil {
@@ -556,12 +556,12 @@ func (uh *UserHandler) DeleteCommentByAdmin(w http.ResponseWriter, r *http.Reque
 			response.Error(w, status, err)
 			return
 		}
-		if comment, status, err = uh.commentUcase.GetCommentByID(user.ID, int64(commentID)); err != nil {
-			response.Error(w, status, err)
+		if user.ID != config.RoleAdmin {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
 			return
 		}
-		if comment.AuthorID != user.ID {
-			response.Error(w, http.StatusForbidden, errors.New("can't delete another user's comment"))
+		if comment, status, err = uh.commentUcase.GetCommentByID(user.ID, int64(commentID)); err != nil {
+			response.Error(w, status, err)
 			return
 		}
 		if err = uh.notificationUcase.DeleteNotificationsByCommentID(comment.ID); err != nil {
@@ -607,13 +607,13 @@ func (uh *UserHandler) DeletePostByModerator(w http.ResponseWriter, r *http.Requ
 			response.Error(w, status, err)
 			return
 		}
+		if user.ID != config.RoleModerator {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only moderator users allowed"))
+			return
+		}
 		post, status, err = uh.postUcase.GetPostByID(user.ID, int64(postID))
 		if err != nil {
 			response.Error(w, http.StatusBadRequest, err)
-			return
-		}
-		if post.AuthorID != user.ID {
-			response.Error(w, http.StatusForbidden, errors.New("can't delete another user's post"))
 			return
 		}
 		if err = uh.categoryUcase.DeleteFromPostCategoriesBridge(post.ID); err != nil {
