@@ -107,3 +107,13 @@ CREATE TABLE IF NOT EXISTS role_requests (
 	FOREIGN KEY (user_id) REFERENCES users (id) ON
 DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS post_reports (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	moderator_id INTEGER,
+	post_id INTEGER,
+	created_at INTEGER,
+	pending INTEGER,
+	FOREIGN KEY (moderator_id) REFERENCES users (id) ON
+DELETE CASCADE
+);

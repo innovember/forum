@@ -24,3 +24,9 @@ type AdminUsecase interface {
 	GetAllRoleRequests() (roleRequests []models.RoleRequest, err error)
 	DeleteRoleRequest(userID int64) (err error)
 }
+
+type ModeratorUsecase interface {
+	CreatePostReport(postReport *models.PostReport) (err error)
+	DeletePostReport(postReportID int64) (err error)
+	GetMyReports(moderatorID int64) (postReports []models.PostReport, err error)
+}
