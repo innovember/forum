@@ -417,7 +417,7 @@ func (ph *PostHandler) CreateCommentHandlerFunc(w http.ResponseWriter, r *http.R
 		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
-	response.Success(w, "new comment created", status, newComment)
+	response.Success(w, "new comment created", http.StatusOK, newComment)
 	return
 }
 
@@ -680,7 +680,7 @@ func (ph *PostHandler) DeleteCommentHandler(w http.ResponseWriter, r *http.Reque
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		response.Success(w, "comment has been deleted", status, nil)
+		response.Success(w, "comment has been deleted", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
 		return
@@ -734,7 +734,7 @@ func (ph *PostHandler) DeleteNotificationsHandler(w http.ResponseWriter, r *http
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		response.Success(w, "notifications has been deleted", status, nil)
+		response.Success(w, "notifications has been deleted", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
 		return
@@ -926,7 +926,7 @@ func (ph *PostHandler) DeleteImageHandler(w http.ResponseWriter, r *http.Request
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		response.Success(w, "post's image has been deleted", status, nil)
+		response.Success(w, "post's image has been deleted", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
 		return

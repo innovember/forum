@@ -40,6 +40,7 @@ func Run() {
 	// User repositories
 	userRepository := userRepo.NewUserDBRepository(dbConn)
 	adminRepository := userRepo.NewAdminDBRepository(dbConn)
+	moderatorRepository := userRepo.NewModeratorDBRepository(dbConn)
 
 	// Post repositories
 	postRepository := postRepo.NewPostDBRepository(dbConn)
@@ -52,7 +53,7 @@ func Run() {
 	// User usecases
 	userUcase := userUsecase.NewUserUsecase(userRepository)
 	adminUcase := userUsecase.NewAdminUsecase(adminRepository)
-
+	moderatorUcase := userUsecase.NewModeratorUsecase(moderatorRepository)
 	// Post usecases
 	postUcase := postUsecase.NewPostUsecase(postRepository)
 	postRateUcase := postUsecase.NewRateUsecase(postRateRepository)
@@ -66,6 +67,7 @@ func Run() {
 	mw := middleware.NewMiddlewareManager()
 	// User delivery
 	userHandler := userHandler.NewUserHandler(userUcase, adminUcase,
+		moderatorUcase,
 		postUcase, postRateUcase,
 		categoryUcase, commentUcase,
 		notificationUcase, commentRateUcase)

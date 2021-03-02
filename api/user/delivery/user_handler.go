@@ -19,6 +19,7 @@ import (
 type UserHandler struct {
 	userUcase         user.UserUsecase
 	adminUcase        user.AdminUsecase
+	moderatorUcase    user.ModeratorUsecase
 	postUcase         post.PostUsecase
 	rateUcase         post.RateUsecase
 	categoryUcase     post.CategoryUsecase
@@ -30,6 +31,7 @@ type UserHandler struct {
 func NewUserHandler(
 	userUcase user.UserUsecase,
 	adminUcase user.AdminUsecase,
+	moderatorUcase user.ModeratorUsecase,
 	postUcase post.PostUsecase,
 	rateUcase post.RateUsecase,
 	categoryUcase post.CategoryUsecase,
@@ -39,6 +41,7 @@ func NewUserHandler(
 	return &UserHandler{
 		userUcase:         userUcase,
 		adminUcase:        adminUcase,
+		moderatorUcase:    moderatorUcase,
 		postUcase:         postUcase,
 		rateUcase:         rateUcase,
 		categoryUcase:     categoryUcase,
@@ -81,8 +84,9 @@ func (uh *UserHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	// mux.HandleFunc("/api/admin/category/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteCategory)))
 
 	// moderator
-	// mux.HandleFunc("/api/moderator/reports", mw.SetHeaders(mw.AuthorizedOnly(uh.MyReports)))
-	// mux.HandleFunc("/api/moderator/report/post", mw.SetHeaders(mw.AuthorizedOnly(uh.CreatePostReport)))
+	mux.HandleFunc("/api/moderator/reports", mw.SetHeaders(mw.AuthorizedOnly(uh.MyReports)))
+	mux.HandleFunc("/api/moderator/report/post/create", mw.SetHeaders(mw.AuthorizedOnly(uh.CreatePostReport)))
+	mux.HandleFunc("/api/moderator/report/post/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeletePostReport)))
 	mux.HandleFunc("/api/moderator/post/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeletePostByModerator)))
 }
 
@@ -299,7 +303,7 @@ func (uh *UserHandler) CreateRoleRequest(w http.ResponseWriter, r *http.Request)
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		response.Success(w, "new role request created", status, nil)
+		response.Success(w, "new role request created", http.StatusCreated, nil)
 	} else {
 		http.Error(w, "Only POST method allowed, return to main page", 405)
 		return
@@ -327,7 +331,7 @@ func (uh *UserHandler) DeleteRoleRequest(w http.ResponseWriter, r *http.Request)
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		response.Success(w, "role request has been removed", status, nil)
+		response.Success(w, "role request has been removed", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
 		return
@@ -356,7 +360,7 @@ func (uh *UserHandler) GetRoleRequest(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		response.Success(w, "get role request by user id", status, roleRequest)
+		response.Success(w, "get role request by user id", http.StatusOK, roleRequest)
 	} else {
 		http.Error(w, "Only GET method allowed, return to main page", 405)
 		return
@@ -389,7 +393,7 @@ func (uh *UserHandler) GetRoleRequests(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		response.Success(w, "get role requests", status, roleRequests)
+		response.Success(w, "get role requests", http.StatusOK, roleRequests)
 	} else {
 		http.Error(w, "Only GET method allowed, return to main page", 405)
 		return
@@ -427,7 +431,7 @@ func (uh *UserHandler) DismissRoleRequest(w http.ResponseWriter, r *http.Request
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		response.Success(w, "role request has been removed", status, nil)
+		response.Success(w, "role request has been removed", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
 		return
@@ -465,7 +469,7 @@ func (uh *UserHandler) AcceptRoleRequest(w http.ResponseWriter, r *http.Request)
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		response.Success(w, "role request has been accepted", status, nil)
+		response.Success(w, "role request has been accepted", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only PUT method allowed, return to main page", 405)
 		return
@@ -529,7 +533,7 @@ func (uh *UserHandler) DeletePostByAdmin(w http.ResponseWriter, r *http.Request)
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		response.Success(w, "post has been deleted", status, nil)
+		response.Success(w, "post has been deleted", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
 		return
@@ -580,7 +584,7 @@ func (uh *UserHandler) DeleteCommentByAdmin(w http.ResponseWriter, r *http.Reque
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		response.Success(w, "comment has been deleted", status, nil)
+		response.Success(w, "comment has been deleted", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
 		return
@@ -644,9 +648,113 @@ func (uh *UserHandler) DeletePostByModerator(w http.ResponseWriter, r *http.Requ
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		response.Success(w, "post has been deleted", status, nil)
+		response.Success(w, "post has been deleted", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) CreatePostReport(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		var (
+			input  models.PostReport
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+		)
+		if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.ID != config.RoleModerator {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only moderator users allowed"))
+			return
+		}
+		if err = uh.moderatorUcase.CreatePostReport(&input); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "post report created", http.StatusCreated, input)
+	} else {
+		http.Error(w, "Only POST method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) DeletePostReport(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "DELETE" {
+		var (
+			status       int
+			err          error
+			cookie       *http.Cookie
+			user         *models.User
+			postReportID int
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.ID != config.RoleModerator {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only moderator users allowed"))
+			return
+		}
+		_id := r.URL.Path[len("/api/moderator/report/post/delete/"):]
+		if postReportID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("post report id doesn't exist"))
+			return
+		}
+		if err = uh.moderatorUcase.DeletePostReport(int64(postReportID)); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "post report has been removed", http.StatusOK, nil)
+	} else {
+		http.Error(w, "Only DELETE method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) MyReports(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		var (
+			status      int
+			err         error
+			cookie      *http.Cookie
+			user        *models.User
+			postReports []models.PostReport
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.ID != config.RoleModerator {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only moderator users allowed"))
+			return
+		}
+		if postReports, err = uh.moderatorUcase.GetMyReports(user.ID); err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		response.Success(w, "fetched all post reports by moderator id", http.StatusOK, postReports)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
 		return
 	}
 }
