@@ -24,6 +24,11 @@ type AdminRepository interface {
 	UpgradeRole(userID int64) (err error)
 	GetAllRoleRequests() (roleRequests []models.RoleRequest, err error)
 	DeleteRoleRequest(userID int64) (err error)
+	GetAllPostReports() (postReports []models.PostReport, err error)
+	AcceptPostReport(postReportID int64) (err error)
+	DismissPostReport(postReportID int64) (err error)
+	GetAllModerators() (moderators []models.User, err error)
+	DemoteModerator(moderatorID int64) (err error)
 }
 
 type ModeratorRepository interface {

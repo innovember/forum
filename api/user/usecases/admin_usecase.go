@@ -33,3 +33,38 @@ func (au *AdminUsecase) DeleteRoleRequest(userID int64) (err error) {
 	}
 	return nil
 }
+
+func (au *AdminUsecase) GetAllPostReports() (postReports []models.PostReport, err error) {
+	if postReports, err = au.adminRepo.GetAllPostReports(); err != nil {
+		return nil, err
+	}
+	return postReports, nil
+}
+
+func (au *AdminUsecase) AcceptPostReport(postReportID int64) (err error) {
+	if err = au.adminRepo.AcceptPostReport(postReportID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (au *AdminUsecase) DismissPostReport(postReportID int64) (err error) {
+	if err = au.adminRepo.DismissPostReport(postReportID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (au *AdminUsecase) GetAllModerators() (moderators []models.User, err error) {
+	if moderators, err = au.adminRepo.GetAllModerators(); err != nil {
+		return nil, err
+	}
+	return moderators, nil
+}
+
+func (au *AdminUsecase) DemoteModerator(moderatorID int64) (err error) {
+	if err = au.adminRepo.DemoteModerator(moderatorID); err != nil {
+		return err
+	}
+	return nil
+}
