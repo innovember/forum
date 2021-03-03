@@ -16,7 +16,8 @@ const (
 	SessionExpiration = 1 * time.Hour
 
 	// User roles
-	RoleGuest     = 0
+	RoleGuest     = -1
+	RoleUser      = 0
 	RoleModerator = 1
 	RoleAdmin     = 2
 

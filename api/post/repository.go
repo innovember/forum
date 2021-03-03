@@ -26,6 +26,8 @@ type CategoryRepository interface {
 	IsCategoryExist(category string) (bool, error)
 	Update(postID int64, categories []string) (err error)
 	DeleteFromPostCategoriesBridge(postID int64) (err error)
+	DeleteCategoryByID(categoryID int64) (err error)
+	CreateNewCategory(category string) (err error)
 }
 
 type RateRepository interface {

@@ -33,3 +33,17 @@ func (cu *CategoryUsecase) DeleteFromPostCategoriesBridge(postID int64) (err err
 	}
 	return nil
 }
+
+func (cu *CategoryUsecase) DeleteCategoryByID(categoryID int64) (err error) {
+	if err = cu.categoryRepo.DeleteCategoryByID(categoryID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (cu *CategoryUsecase) CreateNewCategory(category string) (err error) {
+	if err = cu.categoryRepo.CreateNewCategory(category); err != nil {
+		return err
+	}
+	return nil
+}

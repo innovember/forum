@@ -135,3 +135,43 @@ func (cr *CategoryDBRepository) DeleteFromPostCategoriesBridge(postID int64) (er
 	}
 	return nil
 }
+
+func (cr *CategoryDBRepository) DeleteCategoryByID(categoryID int64) (err error) {
+	var (
+		ctx context.Context
+		tx  *sql.Tx
+	)
+	ctx = context.Background()
+	if tx, err = cr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(`DELETE FROM categories
+						 WHERE id = ?
+ 						)`, categoryID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (cr *CategoryDBRepository) CreateNewCategory(category string) (err error) {
+	var (
+		ctx context.Context
+		tx  *sql.Tx
+	)
+	ctx = context.Background()
+	if tx, err = cr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(`INSERT INTO categories(name) VALUES(?)`, category); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
