@@ -79,9 +79,9 @@ func (uh *UserHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	// mux.HandleFunc("/api/admin/moderators", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllModerators)))
 	// mux.HandleFunc("/api/admin/demote/moderator/", mw.SetHeaders(mw.AuthorizedOnly(uh.DemoteModerator)))
 
-	// mux.HandleFunc("/api/admin/categories", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllCategories)))
-	// mux.HandleFunc("/api/admin/category/add", mw.SetHeaders(mw.AuthorizedOnly(uh.CreateNewCategory)))
-	// mux.HandleFunc("/api/admin/category/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteCategory)))
+	mux.HandleFunc("/api/admin/categories", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllCategories)))
+	mux.HandleFunc("/api/admin/category/add", mw.SetHeaders(mw.AuthorizedOnly(uh.CreateNewCategory)))
+	mux.HandleFunc("/api/admin/category/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteCategory)))
 
 	// moderator
 	mux.HandleFunc("/api/moderator/reports", mw.SetHeaders(mw.AuthorizedOnly(uh.MyReports)))
@@ -120,7 +120,7 @@ func (uh *UserHandler) CreateUserHandlerFunc(w http.ResponseWriter, r *http.Requ
 		Password:  hashedPassword,
 		Email:     input.Email,
 		SessionID: "",
-		Role:      config.RoleGuest,
+		Role:      config.RoleUser,
 	}
 	if adminAuthToken != "" && adminAuthToken == input.AdminAuthToken {
 		user.Role = config.RoleAdmin
@@ -381,7 +381,7 @@ func (uh *UserHandler) GetRoleRequests(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, status, err)
 			return
 		}
-		if user.ID != config.RoleAdmin {
+		if user.Role != config.RoleAdmin {
 			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
 			return
 		}
@@ -414,7 +414,7 @@ func (uh *UserHandler) DismissRoleRequest(w http.ResponseWriter, r *http.Request
 			response.Error(w, status, err)
 			return
 		}
-		if user.ID != config.RoleAdmin {
+		if user.Role != config.RoleAdmin {
 			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
 			return
 		}
@@ -452,7 +452,7 @@ func (uh *UserHandler) AcceptRoleRequest(w http.ResponseWriter, r *http.Request)
 			response.Error(w, status, err)
 			return
 		}
-		if user.ID != config.RoleAdmin {
+		if user.Role != config.RoleAdmin {
 			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
 			return
 		}
@@ -496,7 +496,7 @@ func (uh *UserHandler) DeletePostByAdmin(w http.ResponseWriter, r *http.Request)
 			response.Error(w, status, err)
 			return
 		}
-		if user.ID != config.RoleAdmin {
+		if user.Role != config.RoleAdmin {
 			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
 			return
 		}
@@ -560,7 +560,7 @@ func (uh *UserHandler) DeleteCommentByAdmin(w http.ResponseWriter, r *http.Reque
 			response.Error(w, status, err)
 			return
 		}
-		if user.ID != config.RoleAdmin {
+		if user.Role != config.RoleAdmin {
 			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
 			return
 		}
@@ -611,7 +611,7 @@ func (uh *UserHandler) DeletePostByModerator(w http.ResponseWriter, r *http.Requ
 			response.Error(w, status, err)
 			return
 		}
-		if user.ID != config.RoleModerator {
+		if user.Role != config.RoleModerator {
 			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only moderator users allowed"))
 			return
 		}
@@ -673,7 +673,7 @@ func (uh *UserHandler) CreatePostReport(w http.ResponseWriter, r *http.Request) 
 			response.Error(w, status, err)
 			return
 		}
-		if user.ID != config.RoleModerator {
+		if user.Role != config.RoleModerator {
 			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only moderator users allowed"))
 			return
 		}
@@ -706,7 +706,7 @@ func (uh *UserHandler) DeletePostReport(w http.ResponseWriter, r *http.Request) 
 			response.Error(w, status, err)
 			return
 		}
-		if user.ID != config.RoleModerator {
+		if user.Role != config.RoleModerator {
 			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only moderator users allowed"))
 			return
 		}
@@ -744,7 +744,7 @@ func (uh *UserHandler) MyReports(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, status, err)
 			return
 		}
-		if user.ID != config.RoleModerator {
+		if user.Role != config.RoleModerator {
 			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only moderator users allowed"))
 			return
 		}
@@ -755,6 +755,110 @@ func (uh *UserHandler) MyReports(w http.ResponseWriter, r *http.Request) {
 		response.Success(w, "fetched all post reports by moderator id", http.StatusOK, postReports)
 	} else {
 		http.Error(w, "Only GET method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) GetAllCategories(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		var (
+			status     int
+			err        error
+			cookie     *http.Cookie
+			user       *models.User
+			categories []models.Category
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.Role != config.RoleAdmin {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
+			return
+		}
+		if categories, status, err = uh.categoryUcase.GetAllCategories(); err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		response.Success(w, "all categories", status, categories)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) CreateNewCategory(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		var (
+			input  models.Category
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+		)
+		if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.Role != config.RoleAdmin {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
+			return
+		}
+		if err = uh.categoryUcase.CreateNewCategory(input.Name); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "new category has been created", http.StatusCreated, input)
+	} else {
+		http.Error(w, "Only POST method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "DELETE" {
+		var (
+			status     int
+			err        error
+			cookie     *http.Cookie
+			user       *models.User
+			categoryID int
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.Role != config.RoleAdmin {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
+			return
+		}
+		_id := r.URL.Path[len("/api/admin/category/delete/"):]
+		if categoryID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("category id doesn't exist"))
+			return
+		}
+		if err = uh.categoryUcase.DeleteCategoryByID(int64(categoryID)); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "category has been removed", http.StatusOK, nil)
+	} else {
+		http.Error(w, "Only DELETE method allowed, return to main page", 405)
 		return
 	}
 }
