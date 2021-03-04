@@ -69,9 +69,9 @@ func (uh *UserHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/admin/request/dismiss/", mw.SetHeaders(mw.AuthorizedOnly(uh.DismissRoleRequest)))
 	mux.HandleFunc("/api/admin/request/accept/", mw.SetHeaders(mw.AuthorizedOnly(uh.AcceptRoleRequest)))
 
-	// mux.HandleFunc("/api/admin/post/reports", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllReports)))
-	// mux.HandleFunc("/api/admin/post/report/dismiss/", mw.SetHeaders(mw.AuthorizedOnly(uh.DismissPostReport)))
-	// mux.HandleFunc("/api/admin/post/report/accept/", mw.SetHeaders(mw.AuthorizedOnly(uh.AcceptPostReport)))
+	mux.HandleFunc("/api/admin/post/reports", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllPostReports)))
+	mux.HandleFunc("/api/admin/post/report/dismiss/", mw.SetHeaders(mw.AuthorizedOnly(uh.DismissPostReport)))
+	mux.HandleFunc("/api/admin/post/report/accept/", mw.SetHeaders(mw.AuthorizedOnly(uh.AcceptPostReport)))
 
 	mux.HandleFunc("/api/admin/post/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeletePostByAdmin)))
 	mux.HandleFunc("/api/admin/comment/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteCommentByAdmin)))
@@ -403,11 +403,11 @@ func (uh *UserHandler) GetRoleRequests(w http.ResponseWriter, r *http.Request) {
 func (uh *UserHandler) DismissRoleRequest(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "DELETE" {
 		var (
-			status int
-			err    error
-			cookie *http.Cookie
-			user   *models.User
-			userID int
+			status        int
+			err           error
+			cookie        *http.Cookie
+			user          *models.User
+			roleRequestID int
 		)
 		cookie, _ = r.Cookie(config.SessionCookieName)
 		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
@@ -419,11 +419,11 @@ func (uh *UserHandler) DismissRoleRequest(w http.ResponseWriter, r *http.Request
 			return
 		}
 		_id := r.URL.Path[len("/api/admin/request/dismiss/"):]
-		if userID, err = strconv.Atoi(_id); err != nil {
-			response.Error(w, http.StatusBadRequest, errors.New("user id doesn't exist"))
+		if roleRequestID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("request id doesn't exist"))
 			return
 		}
-		if err = uh.adminUcase.DeleteRoleRequest(int64(userID)); err != nil {
+		if err = uh.adminUcase.DeleteRoleRequest(int64(roleRequestID)); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -441,11 +441,11 @@ func (uh *UserHandler) DismissRoleRequest(w http.ResponseWriter, r *http.Request
 func (uh *UserHandler) AcceptRoleRequest(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "PUT" {
 		var (
-			status int
-			err    error
-			cookie *http.Cookie
-			user   *models.User
-			userID int
+			status        int
+			err           error
+			cookie        *http.Cookie
+			user          *models.User
+			roleRequestID int
 		)
 		cookie, _ = r.Cookie(config.SessionCookieName)
 		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
@@ -457,11 +457,11 @@ func (uh *UserHandler) AcceptRoleRequest(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		_id := r.URL.Path[len("/api/admin/request/accept/"):]
-		if userID, err = strconv.Atoi(_id); err != nil {
-			response.Error(w, http.StatusBadRequest, errors.New("user id doesn't exist"))
+		if roleRequestID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("request id doesn't exist"))
 			return
 		}
-		if err = uh.adminUcase.UpgradeRole(int64(userID)); err != nil {
+		if err = uh.adminUcase.UpgradeRole(int64(roleRequestID)); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -859,6 +859,115 @@ func (uh *UserHandler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
 		response.Success(w, "category has been removed", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) GetAllPostReports(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		var (
+			status      int
+			err         error
+			cookie      *http.Cookie
+			user        *models.User
+			postReports []models.PostReport
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.Role != config.RoleAdmin {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
+			return
+		}
+		if postReports, err = uh.adminUcase.GetAllPostReports(); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "get role requests", http.StatusOK, postReports)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) DismissPostReport(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "DELETE" {
+		var (
+			status       int
+			err          error
+			cookie       *http.Cookie
+			user         *models.User
+			postReportID int
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.Role != config.RoleAdmin {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
+			return
+		}
+		_id := r.URL.Path[len("/api/admin/post/report/dismiss/"):]
+		if postReportID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("post report id doesn't exist"))
+			return
+		}
+		if err = uh.adminUcase.DismissPostReport(int64(postReportID)); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "post report has been removed", http.StatusOK, nil)
+	} else {
+		http.Error(w, "Only DELETE method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) AcceptPostReport(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "PUT" {
+		var (
+			status       int
+			err          error
+			cookie       *http.Cookie
+			user         *models.User
+			postReportID int
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.Role != config.RoleAdmin {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
+			return
+		}
+		_id := r.URL.Path[len("/api/admin/request/accept/"):]
+		if postReportID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("request id doesn't exist"))
+			return
+		}
+		if err = uh.adminUcase.AcceptPostReport(int64(postReportID)); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "post report has been accepted", http.StatusOK, nil)
+	} else {
+		http.Error(w, "Only PUT method allowed, return to main page", 405)
 		return
 	}
 }
