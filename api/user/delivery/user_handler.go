@@ -76,8 +76,8 @@ func (uh *UserHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/admin/post/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeletePostByAdmin)))
 	mux.HandleFunc("/api/admin/comment/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteCommentByAdmin)))
 
-	// mux.HandleFunc("/api/admin/moderators", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllModerators)))
-	// mux.HandleFunc("/api/admin/demote/moderator/", mw.SetHeaders(mw.AuthorizedOnly(uh.DemoteModerator)))
+	mux.HandleFunc("/api/admin/moderators", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllModerators)))
+	mux.HandleFunc("/api/admin/demote/moderator/", mw.SetHeaders(mw.AuthorizedOnly(uh.DemoteModerator)))
 
 	mux.HandleFunc("/api/admin/categories", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllCategories)))
 	mux.HandleFunc("/api/admin/category/add", mw.SetHeaders(mw.AuthorizedOnly(uh.CreateNewCategory)))
@@ -889,7 +889,7 @@ func (uh *UserHandler) GetAllPostReports(w http.ResponseWriter, r *http.Request)
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		response.Success(w, "get role requests", http.StatusOK, postReports)
+		response.Success(w, "get all post reports", http.StatusOK, postReports)
 	} else {
 		http.Error(w, "Only GET method allowed, return to main page", 405)
 		return
@@ -966,6 +966,77 @@ func (uh *UserHandler) AcceptPostReport(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		response.Success(w, "post report has been accepted", http.StatusOK, nil)
+	} else {
+		http.Error(w, "Only PUT method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) GetAllModerators(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		var (
+			status     int
+			err        error
+			cookie     *http.Cookie
+			user       *models.User
+			moderators []models.User
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.Role != config.RoleAdmin {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
+			return
+		}
+		if moderators, err = uh.adminUcase.GetAllModerators(); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "get all moderators", http.StatusOK, moderators)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) DemoteModerator(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "PUT" {
+		var (
+			status      int
+			err         error
+			cookie      *http.Cookie
+			user        *models.User
+			moderatorID int
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.Role != config.RoleAdmin {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
+			return
+		}
+		_id := r.URL.Path[len("/api/admin/demote/moderator/"):]
+		if moderatorID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("post report id doesn't exist"))
+			return
+		}
+		if err = uh.adminUcase.DemoteModerator(int64(moderatorID)); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "moderator has been demoted", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only PUT method allowed, return to main page", 405)
 		return
