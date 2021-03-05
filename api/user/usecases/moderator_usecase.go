@@ -32,3 +32,17 @@ func (mu *ModeratorUsecase) GetMyReports(moderatorID int64) (postReports []model
 	}
 	return postReports, nil
 }
+
+func (mu *ModeratorUsecase) ApprovePost(postID int64) (err error) {
+	if err = mu.moderatorRepo.ApprovePost(postID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (mu *ModeratorUsecase) GetAllUnapprovedPosts() (posts []models.Post, err error) {
+	if posts, err = mu.moderatorRepo.GetAllUnapprovedPosts(); err != nil {
+		return nil, err
+	}
+	return posts, nil
+}

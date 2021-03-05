@@ -97,3 +97,63 @@ func (mr *ModeratorDBRepository) GetMyReports(moderatorID int64) (postReports []
 	}
 	return postReports, nil
 }
+
+func (mr *ModeratorDBRepository) ApprovePost(postID int64) (err error) {
+	var (
+		ctx context.Context
+		tx  *sql.Tx
+	)
+	ctx = context.Background()
+	if tx, err = mr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(`UPDATE posts
+						 SET is_approved = 1
+						 WHERE id = ? 
+		`, postID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (mr *ModeratorDBRepository) GetAllUnapprovedPosts() (posts []models.Post, err error) {
+	var (
+		ctx  context.Context
+		tx   *sql.Tx
+		rows *sql.Rows
+	)
+	ctx = context.Background()
+	if tx, err = mr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return nil, err
+	}
+	if rows, err = tx.Query(`SELECT *
+							 FROM posts
+							 WHERE is_approved = 0
+		`); err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var p models.Post
+		err = rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
+			&p.CreatedAt, &p.EditedAt, &p.IsImage,
+			&p.ImagePath, &p.IsApproved)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, p)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return posts, nil
+}

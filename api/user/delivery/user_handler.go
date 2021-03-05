@@ -88,6 +88,20 @@ func (uh *UserHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/moderator/report/post/create", mw.SetHeaders(mw.AuthorizedOnly(uh.CreatePostReport)))
 	mux.HandleFunc("/api/moderator/report/post/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeletePostReport)))
 	mux.HandleFunc("/api/moderator/post/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeletePostByModerator)))
+
+	// moderator -> post reviewing
+	mux.HandleFunc("/api/moderator/posts/unapproved", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllUnapprovedPosts)))
+	mux.HandleFunc("/api/moderator/post/approve/", mw.SetHeaders(mw.AuthorizedOnly(uh.ApprovePost)))
+	// mux.HandleFunc("/api/moderator/post/ban/", mw.SetHeaders(mw.AuthorizedOnly(uh.BanPost)))
+	// mux.HandleFunc("/api/moderator/posts/banned", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllBannedPosts)))
+
+	// user notifications
+	// mux.HandleFunc("/api/user/notifications/admin", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllNotificationsFromAdmin)))
+	// mux.HandleFunc("/api/user/notifications/admin", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteNotificationsFromAdmin)))
+	// mux.HandleFunc("/api/user/notifications/moderator", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllNotificationsFromModerator)))
+	// mux.HandleFunc("/api/user/notifications/moderator", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteNotificationsFromModerator)))
+	// mux.HandleFunc("/api/moderator/notifications/admin", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllNotificationsForModeratorFromAdmin)))
+	// mux.HandleFunc("/api/moderator/notifications/admin", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteNotificationsForModeratorFromAdmin)))
 }
 
 func (uh *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -752,6 +766,10 @@ func (uh *UserHandler) MyReports(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusBadRequest, err)
 			return
 		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
 		response.Success(w, "fetched all post reports by moderator id", http.StatusOK, postReports)
 	} else {
 		http.Error(w, "Only GET method allowed, return to main page", 405)
@@ -779,6 +797,10 @@ func (uh *UserHandler) GetAllCategories(w http.ResponseWriter, r *http.Request) 
 		}
 		if categories, status, err = uh.categoryUcase.GetAllCategories(); err != nil {
 			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
 		response.Success(w, "all categories", status, categories)
@@ -1037,6 +1059,77 @@ func (uh *UserHandler) DemoteModerator(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		response.Success(w, "moderator has been demoted", http.StatusOK, nil)
+	} else {
+		http.Error(w, "Only PUT method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) GetAllUnapprovedPosts(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+			posts  []models.Post
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.Role != config.RoleModerator {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only moderator users allowed"))
+			return
+		}
+		if posts, err = uh.moderatorUcase.GetAllUnapprovedPosts(); err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "all unapproved posts", http.StatusOK, posts)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) ApprovePost(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "PUT" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+			postID int
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.Role != config.RoleModerator {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only moderator users allowed"))
+			return
+		}
+		_id := r.URL.Path[len("/api/moderator/post/approve/"):]
+		if postID, err = strconv.Atoi(_id); err != nil {
+			response.Error(w, http.StatusBadRequest, errors.New("post id doesn't exist"))
+			return
+		}
+		if err = uh.moderatorUcase.ApprovePost(int64(postID)); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "post has been approved", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only PUT method allowed, return to main page", 405)
 		return
