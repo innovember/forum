@@ -111,6 +111,7 @@ func (ph *PostHandler) CreatePostHandlerFunc(w http.ResponseWriter, r *http.Requ
 		EditedAt:   0,
 		IsImage:    input.IsImage,
 		ImagePath:  input.ImagePath,
+		IsApproved: false,
 	}
 	if newPost, status, err = ph.postUcase.Create(&post, input.Categories); err != nil {
 		response.Error(w, status, err)

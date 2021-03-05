@@ -29,10 +29,10 @@ func (pr *PostDBRepository) Create(post *models.Post, categories []string) (*mod
 		err          error
 	)
 	if result, err = pr.dbConn.Exec(`
-	INSERT INTO posts(author_id,title, content, created_at,edited_at, is_image,image_path)
-	VALUES(?,?,?,?,?,?,?)`, post.AuthorID, post.Title,
+	INSERT INTO posts(author_id,title, content, created_at,edited_at, is_image,image_path,is_approved)
+	VALUES(?,?,?,?,?,?,?,?)`, post.AuthorID, post.Title,
 		post.Content, now, post.EditedAt,
-		post.IsImage, post.ImagePath); err != nil {
+		post.IsImage, post.ImagePath, post.IsApproved); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 	if post.ID, err = result.LastInsertId(); err != nil {
@@ -69,6 +69,7 @@ func (pr *PostDBRepository) GetAllPosts(userID int64) (posts []models.Post, stat
 					AND user_id = $1
 					),0) AS userRating
 		FROM posts
+		WHERE is_approved = 1
 		ORDER BY created_at DESC
 		`, userID); err != nil {
 		return nil, http.StatusInternalServerError, err
@@ -78,7 +79,8 @@ func (pr *PostDBRepository) GetAllPosts(userID int64) (posts []models.Post, stat
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
 			&p.CreatedAt, &p.EditedAt, &p.IsImage,
-			&p.ImagePath, &p.PostRating, &p.UserRating)
+			&p.ImagePath, &p.IsApproved,
+			&p.PostRating, &p.UserRating)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -147,10 +149,12 @@ func (pr *PostDBRepository) GetPostByID(userID int64, postID int64) (post *model
 		commentRepo = NewCommentDBRepository(pr.dbConn)
 	)
 	if err = pr.dbConn.QueryRow(`
-	SELECT * FROM posts WHERE id = ?`, postID,
+	SELECT * FROM posts WHERE id = ?
+	AND is_approved = 1`, postID,
 	).Scan(&p.ID, &p.AuthorID, &p.Title,
 		&p.Content, &p.CreatedAt,
-		&p.EditedAt, &p.IsImage, &p.ImagePath); err != nil {
+		&p.EditedAt, &p.IsImage, &p.ImagePath,
+		&p.IsApproved); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound, errors.New("post not found")
 		}
@@ -183,6 +187,7 @@ func (pr *PostDBRepository) GetPostsByCategories(categories []string, userID int
 		FROM posts_categories_bridge as pcb
 		INNER JOIN posts as p
 		ON p.id = pcb.post_id
+		WHERE p.is_approved = 1
 		INNER JOIN categories as c
 		ON c.id=pcb.category_id
 		WHERE c.name in (%s)
@@ -197,7 +202,7 @@ func (pr *PostDBRepository) GetPostsByCategories(categories []string, userID int
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
 			&p.CreatedAt, &p.EditedAt, &p.IsImage,
-			&p.ImagePath)
+			&p.ImagePath, &p.IsApproved)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -237,6 +242,7 @@ func (pr *PostDBRepository) GetPostsByRating(orderBy string, userID int64) (post
 					AND user_id = $1
 					),0) AS userRating
 		FROM posts
+		WHERE is_approved = 1
 		ORDER BY rating $2
 		`, userID, orderBy); err != nil {
 		return nil, http.StatusInternalServerError, err
@@ -246,7 +252,8 @@ func (pr *PostDBRepository) GetPostsByRating(orderBy string, userID int64) (post
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
 			&p.CreatedAt, &p.EditedAt, &p.IsImage,
-			&p.ImagePath, &p.PostRating, &p.UserRating)
+			&p.ImagePath, &p.IsApproved,
+			&p.PostRating, &p.UserRating)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -283,6 +290,7 @@ func (pr *PostDBRepository) GetPostsByDate(orderBy string, userID int64) (posts 
 					AND user_id = $1
 					),0) AS userRating
 		FROM posts
+		WHERE is_approved = 1
 		ORDER BY created_at $2
 		`, userID, orderBy); err != nil {
 		return nil, http.StatusInternalServerError, err
@@ -292,7 +300,8 @@ func (pr *PostDBRepository) GetPostsByDate(orderBy string, userID int64) (posts 
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
 			&p.CreatedAt, &p.EditedAt, &p.IsImage,
-			&p.ImagePath, &p.PostRating, &p.UserRating)
+			&p.ImagePath, &p.IsApproved,
+			&p.PostRating, &p.UserRating)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -321,6 +330,7 @@ func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64, userID int64) 
 		SELECT *
 		FROM posts
 		WHERE author_id = ?
+		AND is_approved = 1
 		ORDER BY created_at DESC
 		`, authorID); err != nil {
 		return nil, http.StatusInternalServerError, err
@@ -330,7 +340,7 @@ func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64, userID int64) 
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
 			&p.CreatedAt, &p.EditedAt, &p.IsImage,
-			&p.ImagePath)
+			&p.ImagePath, &p.IsApproved)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -368,6 +378,7 @@ func (pr *PostDBRepository) GetRatedPostsByUser(userID int64, orderBy string, re
 		SELECT p.* FROM posts AS p
 		INNER JOIN post_rating AS pr ON p.id = pr.post_id
 		WHERE pr.user_id = %d AND pr.rate = %d
+		AND p.is_approved = 1
 		ORDER BY p.created_at DESC
 		`, userID, vote)
 	if rows, err = pr.dbConn.Query(query); err != nil {
@@ -378,7 +389,7 @@ func (pr *PostDBRepository) GetRatedPostsByUser(userID int64, orderBy string, re
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
 			&p.CreatedAt, &p.EditedAt, &p.IsImage,
-			&p.ImagePath)
+			&p.ImagePath, &p.IsApproved)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}

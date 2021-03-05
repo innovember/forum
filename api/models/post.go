@@ -14,4 +14,5 @@ type Post struct {
 	CommentsNumber int        `json:"commentsNumber"`
 	IsImage        bool       `json:"isImage"`
 	ImagePath      string     `json:"imagePath"`
+	IsApproved     bool       `json:"isApproved"`
 }
