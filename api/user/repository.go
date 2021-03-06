@@ -37,4 +37,5 @@ type ModeratorRepository interface {
 	GetMyReports(moderatorID int64) (postReports []models.PostReport, err error)
 	ApprovePost(postID int64) (err error)
 	GetAllUnapprovedPosts() (posts []models.Post, err error)
+	BanPost(postID int64, bans []string) (err error)
 }

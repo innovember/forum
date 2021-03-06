@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/innovember/forum/api/models"
+	postRepo "github.com/innovember/forum/api/post/repository"
 	"github.com/innovember/forum/api/user"
 	"time"
 )
@@ -156,4 +157,30 @@ func (mr *ModeratorDBRepository) GetAllUnapprovedPosts() (posts []models.Post, e
 		return nil, err
 	}
 	return posts, nil
+}
+
+func (mr *ModeratorDBRepository) BanPost(postID int64, bans []string) (err error) {
+	var (
+		ctx     context.Context
+		tx      *sql.Tx
+		banRepo = postRepo.NewBanDBRepository(mr.dbConn)
+	)
+	ctx = context.Background()
+	if tx, err = mr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(`UPDATE posts
+						 SET is_banned = 1
+						 WHERE id = ? 
+		`, postID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	if err = banRepo.Create(postID, bans); err != nil {
+		return err
+	}
+	return nil
 }

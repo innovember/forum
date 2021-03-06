@@ -46,3 +46,10 @@ func (mu *ModeratorUsecase) GetAllUnapprovedPosts() (posts []models.Post, err er
 	}
 	return posts, nil
 }
+
+func (mu *ModeratorUsecase) BanPost(postID int64, bans []string) (err error) {
+	if err = mu.moderatorRepo.BanPost(postID, bans); err != nil {
+		return err
+	}
+	return nil
+}
