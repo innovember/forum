@@ -20,6 +20,7 @@ type InputPost struct {
 	Categories []string `json:"categories"`
 	IsImage    bool     `json:"isImage"`
 	ImagePath  string   `json:"imagePath"`
+	Bans       []string `json:"bans"`
 }
 
 type InputComment struct {
@@ -47,7 +48,7 @@ type InputCommentRate struct {
 }
 
 type InputFilterPost struct {
-	Option     string   `json:"option"`   // categories or date or rating or author
+	Option     string   `json:"option"`   // categories or date or rating or author or banned
 	AuthorID   int64    `json:"authorID"` // getAllPosts created by AuthorID
 	Date       string   `json:"date"`     // ASC or DESC
 	Rating     string   `json:"rating"`   // ASC or DESC

@@ -15,4 +15,5 @@ type Post struct {
 	IsImage        bool       `json:"isImage"`
 	ImagePath      string     `json:"imagePath"`
 	IsApproved     bool       `json:"isApproved"`
+	IsBanned       bool       `json:"isBanned"`
 }

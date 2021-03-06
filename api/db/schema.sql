@@ -16,6 +16,8 @@ CREATE INDEX IF NOT EXISTS users_cover ON users (username, password, email, sess
 
 CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);
 
+CREATE TABLE IF NOT EXISTS bans (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);
+
 CREATE TABLE IF NOT EXISTS posts (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	author_id INTEGER,
@@ -26,6 +28,7 @@ CREATE TABLE IF NOT EXISTS posts (
 	is_image INTEGER,
 	image_path TEXT,
 	is_approved INTEGER,
+	is_banned INTEGER DEFAULT 0,
 	FOREIGN KEY (author_id) REFERENCES users (id) ON
 DELETE CASCADE
 );
@@ -37,6 +40,16 @@ CREATE TABLE IF NOT EXISTS posts_categories_bridge (
 	FOREIGN KEY (post_id) REFERENCES posts (id) ON
 DELETE CASCADE,
 	FOREIGN KEY (category_id) REFERENCES categories (id) ON
+DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS posts_bans_bridge (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	post_id INTEGER,
+	ban_id INTEGER,
+	FOREIGN KEY (post_id) REFERENCES posts (id) ON
+DELETE CASCADE,
+	FOREIGN KEY (ban_id) REFERENCES bans (id) ON
 DELETE CASCADE
 );
 
