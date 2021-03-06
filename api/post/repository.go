@@ -73,3 +73,14 @@ type RateCommentRepository interface {
 	DeleteRatesByCommentID(commentID int64) (err error)
 	DeleteCommentsRateByPostID(postID int64) (err error)
 }
+
+type BanRepository interface {
+	Create(postID int64, categories []string) (err error)
+	GetAllCategories() (categories []models.Category, status int, err error)
+	GetCategoryIDByName(name string) (id int64, err error)
+	IsCategoryExist(category string) (bool, error)
+	Update(postID int64, categories []string) (err error)
+	DeleteFromPostCategoriesBridge(postID int64) (err error)
+	DeleteCategoryByID(categoryID int64) (err error)
+	CreateNewCategory(category string) (err error)
+}

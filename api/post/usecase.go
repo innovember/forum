@@ -62,3 +62,11 @@ type RateCommentUsecase interface {
 	DeleteRatesByCommentID(commentID int64) (err error)
 	DeleteCommentsRateByPostID(postID int64) (err error)
 }
+
+type BanUsecase interface {
+	GetAllCategories() (categories []models.Category, status int, err error)
+	Update(postID int64, categories []string) (err error)
+	DeleteFromPostCategoriesBridge(postID int64) (err error)
+	DeleteCategoryByID(categoryID int64) (err error)
+	CreateNewCategory(category string) (err error)
+}
