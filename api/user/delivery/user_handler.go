@@ -92,16 +92,15 @@ func (uh *UserHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	// moderator -> post reviewing
 	mux.HandleFunc("/api/moderator/posts/unapproved", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllUnapprovedPosts)))
 	mux.HandleFunc("/api/moderator/post/approve/", mw.SetHeaders(mw.AuthorizedOnly(uh.ApprovePost)))
-	// mux.HandleFunc("/api/moderator/post/ban/", mw.SetHeaders(mw.AuthorizedOnly(uh.BanPost)))
-	// mux.HandleFunc("/api/moderator/posts/banned", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllBannedPosts)))
+	mux.HandleFunc("/api/moderator/post/ban/", mw.SetHeaders(mw.AuthorizedOnly(uh.BanPost)))
 
 	// user notifications
 	// mux.HandleFunc("/api/user/notifications/admin", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllNotificationsFromAdmin)))
-	// mux.HandleFunc("/api/user/notifications/admin", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteNotificationsFromAdmin)))
+	// mux.HandleFunc("/api/user/notifications/admin/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteNotificationsFromAdmin)))
 	// mux.HandleFunc("/api/user/notifications/moderator", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllNotificationsFromModerator)))
-	// mux.HandleFunc("/api/user/notifications/moderator", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteNotificationsFromModerator)))
+	// mux.HandleFunc("/api/user/notifications/moderator/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteNotificationsFromModerator)))
 	// mux.HandleFunc("/api/moderator/notifications/admin", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllNotificationsForModeratorFromAdmin)))
-	// mux.HandleFunc("/api/moderator/notifications/admin", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteNotificationsForModeratorFromAdmin)))
+	// mux.HandleFunc("/api/moderator/notifications/admin/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteNotificationsForModeratorFromAdmin)))
 }
 
 func (uh *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -1132,6 +1131,44 @@ func (uh *UserHandler) ApprovePost(w http.ResponseWriter, r *http.Request) {
 		response.Success(w, "post has been approved", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only PUT method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) BanPost(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+			postID int
+			input  models.InputPost
+		)
+		if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if user.Role != config.RoleModerator {
+			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only moderator users allowed"))
+			return
+		}
+		if err = uh.moderatorUcase.BanPost(int64(postID), input.Bans); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "post has been banned", http.StatusOK, nil)
+	} else {
+		http.Error(w, "Only POST method allowed, return to main page", 405)
 		return
 	}
 }
