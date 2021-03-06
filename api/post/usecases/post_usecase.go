@@ -80,3 +80,10 @@ func (pu *PostUsecase) Delete(postID int64) (status int, err error) {
 	}
 	return status, nil
 }
+
+func (pu *PostUsecase) GetBannedPostsByCategories(categories []string) (posts []models.Post, status int, err error) {
+	if posts, status, err = pu.postRepo.GetBannedPostsByCategories(categories); err != nil {
+		return nil, status, err
+	}
+	return posts, status, err
+}

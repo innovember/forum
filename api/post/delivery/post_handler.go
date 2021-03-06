@@ -348,6 +348,15 @@ func (ph *PostHandler) FilterPostsFunc(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, status, err)
 			return
 		}
+	case "banned":
+		if user.Role != config.RoleModerator {
+			response.Error(w, http.StatusForbidden, errors.New("only moderator users can filter banned posts"))
+			return
+		}
+		if posts, status, err = ph.postUcase.GetBannedPostsByCategories(input.Categories); err != nil {
+			response.Error(w, status, err)
+			return
+		}
 	default:
 		response.Error(w, http.StatusBadRequest, errors.New("option error in filter"))
 		return

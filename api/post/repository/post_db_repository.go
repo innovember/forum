@@ -79,7 +79,7 @@ func (pr *PostDBRepository) GetAllPosts(userID int64) (posts []models.Post, stat
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
 			&p.CreatedAt, &p.EditedAt, &p.IsImage,
-			&p.ImagePath, &p.IsApproved,
+			&p.ImagePath, &p.IsApproved, &p.IsBanned,
 			&p.PostRating, &p.UserRating)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
@@ -154,7 +154,7 @@ func (pr *PostDBRepository) GetPostByID(userID int64, postID int64) (post *model
 	).Scan(&p.ID, &p.AuthorID, &p.Title,
 		&p.Content, &p.CreatedAt,
 		&p.EditedAt, &p.IsImage, &p.ImagePath,
-		&p.IsApproved); err != nil {
+		&p.IsApproved, &p.IsBanned); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound, errors.New("post not found")
 		}
@@ -202,7 +202,7 @@ func (pr *PostDBRepository) GetPostsByCategories(categories []string, userID int
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
 			&p.CreatedAt, &p.EditedAt, &p.IsImage,
-			&p.ImagePath, &p.IsApproved)
+			&p.ImagePath, &p.IsApproved, &p.IsBanned)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -252,7 +252,7 @@ func (pr *PostDBRepository) GetPostsByRating(orderBy string, userID int64) (post
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
 			&p.CreatedAt, &p.EditedAt, &p.IsImage,
-			&p.ImagePath, &p.IsApproved,
+			&p.ImagePath, &p.IsApproved, &p.IsBanned,
 			&p.PostRating, &p.UserRating)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
@@ -300,7 +300,7 @@ func (pr *PostDBRepository) GetPostsByDate(orderBy string, userID int64) (posts 
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
 			&p.CreatedAt, &p.EditedAt, &p.IsImage,
-			&p.ImagePath, &p.IsApproved,
+			&p.ImagePath, &p.IsApproved, &p.IsBanned,
 			&p.PostRating, &p.UserRating)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
@@ -340,7 +340,7 @@ func (pr *PostDBRepository) GetAllPostsByAuthorID(authorID int64, userID int64) 
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
 			&p.CreatedAt, &p.EditedAt, &p.IsImage,
-			&p.ImagePath, &p.IsApproved)
+			&p.ImagePath, &p.IsApproved, &p.IsBanned)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -389,7 +389,7 @@ func (pr *PostDBRepository) GetRatedPostsByUser(userID int64, orderBy string, re
 		var p models.Post
 		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
 			&p.CreatedAt, &p.EditedAt, &p.IsImage,
-			&p.ImagePath, &p.IsApproved)
+			&p.ImagePath, &p.IsApproved, &p.IsBanned)
 		if status, err = pr.GetAuthor(&p); err != nil {
 			return nil, status, err
 		}
@@ -482,4 +482,47 @@ func (pr *PostDBRepository) Delete(postID int64) (status int, err error) {
 		return http.StatusOK, nil
 	}
 	return http.StatusNotModified, errors.New("could not delete the post")
+}
+
+func (pr *PostDBRepository) GetBannedPostsByCategories(categories []string) (posts []models.Post, status int, err error) {
+	var (
+		rows           *sql.Rows
+		categoriesList string = fmt.Sprintf("\"%s\"", strings.Join(categories, "\", \""))
+	)
+	query := fmt.Sprintf(`
+		SELECT p.*
+		FROM posts_bans_bridge as pbb
+		INNER JOIN posts as p
+		ON p.id = pbb.post_id
+		WHERE p.is_approved = 0
+		AND p.is_banned = 1
+		INNER JOIN bans as b
+		ON b.id=pbb.ban_id
+		WHERE b.name in (%s)
+		GROUP BY p.id
+		HAVING COUNT(DISTINCT b.id) = %d
+		ORDER BY p.created_at DESC`, categoriesList, len(categories))
+	if rows, err = pr.dbConn.Query(query); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var p models.Post
+		rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content,
+			&p.CreatedAt, &p.EditedAt, &p.IsImage,
+			&p.ImagePath, &p.IsApproved, &p.IsBanned)
+		if status, err = pr.GetAuthor(&p); err != nil {
+			return nil, status, err
+		}
+		if status, err = pr.GetCategories(&p); err != nil {
+			return nil, status, err
+		}
+		posts = append(posts, p)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return posts, http.StatusOK, nil
+
 }
