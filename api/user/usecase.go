@@ -38,3 +38,12 @@ type ModeratorUsecase interface {
 	GetAllUnapprovedPosts() (posts []models.Post, err error)
 	BanPost(postID int64, bans []string) (err error)
 }
+
+type UserNotificationUsecase interface {
+	CreateRoleNotification(roleNotification *models.RoleNotification) (err error)
+	CreatePostNotification(postNotification *models.PostNotification) (err error)
+	DeleteAllRoleNotifications(userID int64) (err error)
+	DeleteAllPostNotifications(userID int64) (err error)
+	GetRoleNotifications(userID int64) (roleNotifications []models.RoleNotification, err error)
+	GetPostNotifications(userID int64) (postNotifications []models.PostNotification, err error)
+}
