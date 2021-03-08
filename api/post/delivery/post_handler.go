@@ -716,6 +716,10 @@ func (ph *PostHandler) GetAllNotificationsHandler(w http.ResponseWriter, r *http
 			response.Error(w, http.StatusBadRequest, err)
 			return
 		}
+		if err = ph.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
 		response.Success(w, "all notifications", status, notifications)
 	} else {
 		http.Error(w, "Only GET method allowed, return to main page", 405)

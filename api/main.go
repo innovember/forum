@@ -41,6 +41,7 @@ func Run() {
 	userRepository := userRepo.NewUserDBRepository(dbConn)
 	adminRepository := userRepo.NewAdminDBRepository(dbConn)
 	moderatorRepository := userRepo.NewModeratorDBRepository(dbConn)
+	userNotificationRepository := userRepo.NewUserNotificationDBRepository(dbConn)
 
 	// Post repositories
 	postRepository := postRepo.NewPostDBRepository(dbConn)
@@ -54,6 +55,8 @@ func Run() {
 	userUcase := userUsecase.NewUserUsecase(userRepository)
 	adminUcase := userUsecase.NewAdminUsecase(adminRepository)
 	moderatorUcase := userUsecase.NewModeratorUsecase(moderatorRepository)
+	userNotificationUcase := userUsecase.NewUserNotificationUsecase(userNotificationRepository)
+
 	// Post usecases
 	postUcase := postUsecase.NewPostUsecase(postRepository)
 	postRateUcase := postUsecase.NewRateUsecase(postRateRepository)
@@ -66,11 +69,15 @@ func Run() {
 	mux := http.NewServeMux()
 	mw := middleware.NewMiddlewareManager()
 	// User delivery
-	userHandler := userHandler.NewUserHandler(userUcase, adminUcase,
+	userHandler := userHandler.NewUserHandler(
+		userUcase,
+		adminUcase,
 		moderatorUcase,
+		userNotificationUcase,
 		postUcase, postRateUcase,
 		categoryUcase, commentUcase,
-		notificationUcase, commentRateUcase)
+		notificationUcase, commentRateUcase,
+	)
 	userHandler.Configure(mux, mw)
 
 	// Post delivery

@@ -17,21 +17,23 @@ import (
 )
 
 type UserHandler struct {
-	userUcase         user.UserUsecase
-	adminUcase        user.AdminUsecase
-	moderatorUcase    user.ModeratorUsecase
-	postUcase         post.PostUsecase
-	rateUcase         post.RateUsecase
-	categoryUcase     post.CategoryUsecase
-	commentUcase      post.CommentUsecase
-	notificationUcase post.NotificationUsecase
-	commentRateUcase  post.RateCommentUsecase
+	userUcase             user.UserUsecase
+	adminUcase            user.AdminUsecase
+	moderatorUcase        user.ModeratorUsecase
+	userNotificationUcase user.UserNotificationUsecase
+	postUcase             post.PostUsecase
+	rateUcase             post.RateUsecase
+	categoryUcase         post.CategoryUsecase
+	commentUcase          post.CommentUsecase
+	notificationUcase     post.NotificationUsecase
+	commentRateUcase      post.RateCommentUsecase
 }
 
 func NewUserHandler(
 	userUcase user.UserUsecase,
 	adminUcase user.AdminUsecase,
 	moderatorUcase user.ModeratorUsecase,
+	userNotificationUcase user.UserNotificationUsecase,
 	postUcase post.PostUsecase,
 	rateUcase post.RateUsecase,
 	categoryUcase post.CategoryUsecase,
@@ -39,15 +41,16 @@ func NewUserHandler(
 	notificationUcase post.NotificationUsecase,
 	commentRateUcase post.RateCommentUsecase) *UserHandler {
 	return &UserHandler{
-		userUcase:         userUcase,
-		adminUcase:        adminUcase,
-		moderatorUcase:    moderatorUcase,
-		postUcase:         postUcase,
-		rateUcase:         rateUcase,
-		categoryUcase:     categoryUcase,
-		commentUcase:      commentUcase,
-		notificationUcase: notificationUcase,
-		commentRateUcase:  commentRateUcase,
+		userUcase:             userUcase,
+		adminUcase:            adminUcase,
+		moderatorUcase:        moderatorUcase,
+		postUcase:             postUcase,
+		rateUcase:             rateUcase,
+		categoryUcase:         categoryUcase,
+		commentUcase:          commentUcase,
+		notificationUcase:     notificationUcase,
+		commentRateUcase:      commentRateUcase,
+		userNotificationUcase: userNotificationUcase,
 	}
 }
 
@@ -1167,6 +1170,122 @@ func (uh *UserHandler) BanPost(w http.ResponseWriter, r *http.Request) {
 		response.Success(w, "post has been banned", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only POST method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) GetRoleNotifications(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		var (
+			status            int
+			err               error
+			cookie            *http.Cookie
+			user              *models.User
+			roleNotifications []models.RoleNotification
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		roleNotifications, err = uh.userNotificationUcase.GetRoleNotifications(user.ID)
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "role notifications", http.StatusOK, roleNotifications)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) GetPostNotifications(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		var (
+			status            int
+			err               error
+			cookie            *http.Cookie
+			user              *models.User
+			postNotifications []models.PostNotification
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		postNotifications, err = uh.userNotificationUcase.GetPostNotifications(user.ID)
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "post notifications", http.StatusOK, postNotifications)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) DeleteRoleNotifications(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "DELETE" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if err = uh.userNotificationUcase.DeleteAllRoleNotifications(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "role notifications has been deleted", http.StatusOK, nil)
+	} else {
+		http.Error(w, "Only DELETE method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) DeletePostNotifications(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "DELETE" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if err = uh.userNotificationUcase.DeleteAllPostNotifications(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "post notifications has been deleted", http.StatusOK, nil)
+	} else {
+		http.Error(w, "Only DELETE method allowed, return to main page", 405)
 		return
 	}
 }
