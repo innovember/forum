@@ -131,3 +131,25 @@ CREATE TABLE IF NOT EXISTS post_reports (
 	FOREIGN KEY (moderator_id) REFERENCES users (id) ON
 DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS notifications_roles (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	receiver_id INTEGER,
+	accepted INTEGER,
+	declined INTEGER,
+	demoted INTEGER,
+	created_at INTEGER,
+	FOREIGN KEY (receiver_id) REFERENCES users (id) ON
+DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS notifications_posts (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	receiver_id INTEGER,
+	approved INTEGER,
+	banned INTEGER,
+	deleted INTEGER,
+	created_at INTEGER,
+	FOREIGN KEY (receiver_id) REFERENCES users (id) ON
+DELETE CASCADE
+);

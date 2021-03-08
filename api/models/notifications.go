@@ -13,3 +13,21 @@ type Notification struct {
 	Comment       *Comment       `json:"comment"`
 	CommentRating *CommentRating `json:"commentRating"`
 }
+
+type RoleNotification struct {
+	ID         int64 `json:"id"`
+	ReceiverID int64 `json:"receiver_id"`
+	Accepted   bool  `json:"accepted"`
+	Declined   bool  `json:"declined"`
+	Demoted    bool  `json:"demoted"`
+	CreatedAt  int64 `json:"createdAt,omitempty"`
+}
+
+type PostNotification struct {
+	ID         int64 `json:"id"`
+	ReceiverID int64 `json:"receiver_id"`
+	Approved   bool  `json:"approved"`
+	Banned     bool  `json:"banned"`
+	Deleted    bool  `json:"deleted"`
+	CreatedAt  int64 `json:"createdAt,omitempty"`
+}

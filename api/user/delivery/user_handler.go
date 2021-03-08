@@ -95,12 +95,10 @@ func (uh *UserHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/moderator/post/ban/", mw.SetHeaders(mw.AuthorizedOnly(uh.BanPost)))
 
 	// user notifications
-	// mux.HandleFunc("/api/user/notifications/admin", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllNotificationsFromAdmin)))
-	// mux.HandleFunc("/api/user/notifications/admin/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteNotificationsFromAdmin)))
-	// mux.HandleFunc("/api/user/notifications/moderator", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllNotificationsFromModerator)))
-	// mux.HandleFunc("/api/user/notifications/moderator/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteNotificationsFromModerator)))
-	// mux.HandleFunc("/api/moderator/notifications/admin", mw.SetHeaders(mw.AuthorizedOnly(uh.GetAllNotificationsForModeratorFromAdmin)))
-	// mux.HandleFunc("/api/moderator/notifications/admin/delete/", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteNotificationsForModeratorFromAdmin)))
+	mux.HandleFunc("/api/user/notifications/role", mw.SetHeaders(mw.AuthorizedOnly(uh.GetRoleNotifications)))
+	mux.HandleFunc("/api/user/notifications/role/delete", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteRoleNotifications)))
+	mux.HandleFunc("/api/user/notifications/post", mw.SetHeaders(mw.AuthorizedOnly(uh.GetPostNotifications)))
+	mux.HandleFunc("/api/user/notifications/post/delete", mw.SetHeaders(mw.AuthorizedOnly(uh.DeletePostNotifications)))
 }
 
 func (uh *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
