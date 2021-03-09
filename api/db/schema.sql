@@ -143,6 +143,16 @@ CREATE TABLE IF NOT EXISTS notifications_roles (
 DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS notifications_reports (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	receiver_id INTEGER,
+	approved INTEGER,
+	deleted INTEGER,
+	created_at INTEGER,
+	FOREIGN KEY (receiver_id) REFERENCES users (id) ON
+DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS notifications_posts (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	receiver_id INTEGER,

@@ -19,8 +19,8 @@ func (uu *UserNotificationUsecase) CreateRoleNotification(roleNotification *mode
 	}
 	return nil
 }
-func (uu *UserNotificationUsecase) CreatePostNotification(postNotification *models.PostNotification) (err error) {
-	if err = uu.userNotificationRepo.CreatePostNotification(postNotification); err != nil {
+func (uu *UserNotificationUsecase) CreatePostReportNotification(postNotification *models.PostReportNotification) (err error) {
+	if err = uu.userNotificationRepo.CreatePostReportNotification(postNotification); err != nil {
 		return err
 	}
 	return nil
@@ -33,8 +33,8 @@ func (uu *UserNotificationUsecase) DeleteAllRoleNotifications(userID int64) (err
 	return nil
 }
 
-func (uu *UserNotificationUsecase) DeleteAllPostNotifications(userID int64) (err error) {
-	if err = uu.userNotificationRepo.DeleteAllPostNotifications(userID); err != nil {
+func (uu *UserNotificationUsecase) DeleteAllPostReportNotifications(userID int64) (err error) {
+	if err = uu.userNotificationRepo.DeleteAllPostReportNotifications(userID); err != nil {
 		return err
 	}
 	return nil
@@ -47,8 +47,8 @@ func (uu *UserNotificationUsecase) GetRoleNotifications(userID int64) (roleNotif
 	return roleNotifications, nil
 }
 
-func (uu *UserNotificationUsecase) GetPostNotifications(userID int64) (postNotifications []models.PostNotification, err error) {
-	if postNotifications, err = uu.userNotificationRepo.GetPostNotifications(userID); err != nil {
+func (uu *UserNotificationUsecase) GetPostReportNotifications(userID int64) (postNotifications []models.PostReportNotification, err error) {
+	if postNotifications, err = uu.userNotificationRepo.GetPostReportNotifications(userID); err != nil {
 		return nil, err
 	}
 	return postNotifications, nil

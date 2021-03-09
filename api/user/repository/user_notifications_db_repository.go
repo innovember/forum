@@ -39,7 +39,7 @@ func (ur *UserNotificationDBRepository) CreateRoleNotification(roleNotification 
 	return nil
 }
 
-func (ur *UserNotificationDBRepository) CreatePostNotification(postNotification *models.PostNotification) (err error) {
+func (ur *UserNotificationDBRepository) CreatePostReportNotification(postNotification *models.PostReportNotification) (err error) {
 	var (
 		ctx context.Context
 		tx  *sql.Tx
@@ -49,10 +49,10 @@ func (ur *UserNotificationDBRepository) CreatePostNotification(postNotification 
 	if tx, err = ur.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
 		return err
 	}
-	if _, err = tx.Exec(`INSERT INTO notifications_posts(receiver_id, approved,
-		banned,deleted,created_at)
+	if _, err = tx.Exec(`INSERT INTO notifications_reports(receiver_id, approved,
+		deleted,created_at)
 	VALUES(?,?,?,?,?)`, postNotification.ReceiverID, postNotification.Approved,
-		postNotification.Banned, postNotification.Deleted, now); err != nil {
+		postNotification.Deleted, now); err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -84,7 +84,7 @@ func (ur *UserNotificationDBRepository) DeleteAllRoleNotifications(userID int64)
 	return nil
 }
 
-func (ur *UserNotificationDBRepository) DeleteAllPostNotifications(userID int64) (err error) {
+func (ur *UserNotificationDBRepository) DeleteAllPostReportNotifications(userID int64) (err error) {
 	var (
 		ctx context.Context
 		tx  *sql.Tx
@@ -93,7 +93,7 @@ func (ur *UserNotificationDBRepository) DeleteAllPostNotifications(userID int64)
 	if tx, err = ur.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
 		return err
 	}
-	if _, err = tx.Exec(`DELETE FROM notifications_posts
+	if _, err = tx.Exec(`DELETE FROM notifications_reports
 						 WHERE receiver_id = ?
 		`, userID); err != nil {
 		tx.Rollback()
@@ -138,7 +138,7 @@ func (ur *UserNotificationDBRepository) GetRoleNotifications(userID int64) (role
 	return roleNotifications, nil
 }
 
-func (ur *UserNotificationDBRepository) GetPostNotifications(userID int64) (postNotifications []models.PostNotification, err error) {
+func (ur *UserNotificationDBRepository) GetPostReportNotifications(userID int64) (postNotifications []models.PostReportNotification, err error) {
 	var (
 		ctx  context.Context
 		tx   *sql.Tx
@@ -149,16 +149,16 @@ func (ur *UserNotificationDBRepository) GetPostNotifications(userID int64) (post
 		return nil, err
 	}
 	if rows, err = tx.Query(`SELECT *
-							 FROM notifications_posts
+							 FROM notifications_reports
 							 WHERE receiver_id = ?`,
 		userID); err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var pn models.PostNotification
+		var pn models.PostReportNotification
 		err = rows.Scan(&pn.ID, &pn.ReceiverID, &pn.Approved,
-			&pn.Banned, &pn.Deleted, &pn.CreatedAt)
+			&pn.Deleted, &pn.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
