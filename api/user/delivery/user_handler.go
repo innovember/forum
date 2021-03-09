@@ -579,6 +579,16 @@ func (uh *UserHandler) DeletePostByAdmin(w http.ResponseWriter, r *http.Request)
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
+		postNotification := models.PostNotification{
+			ReceiverID: post.AuthorID,
+			Approved:   false,
+			Banned:     false,
+			Deleted:    true,
+		}
+		if err = uh.userNotificationUcase.CreatePostNotification(&postNotification); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
 		response.Success(w, "post has been deleted", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
@@ -691,6 +701,16 @@ func (uh *UserHandler) DeletePostByModerator(w http.ResponseWriter, r *http.Requ
 			return
 		}
 		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		postNotification := models.PostNotification{
+			ReceiverID: post.AuthorID,
+			Approved:   false,
+			Banned:     false,
+			Deleted:    true,
+		}
+		if err = uh.userNotificationUcase.CreatePostNotification(&postNotification); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -1176,6 +1196,7 @@ func (uh *UserHandler) ApprovePost(w http.ResponseWriter, r *http.Request) {
 			cookie *http.Cookie
 			user   *models.User
 			postID int
+			post   *models.Post
 		)
 		cookie, _ = r.Cookie(config.SessionCookieName)
 		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
@@ -1196,6 +1217,20 @@ func (uh *UserHandler) ApprovePost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if post, status, err = uh.postUcase.GetPostByID(user.ID, int64(postID)); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		postNotification := models.PostNotification{
+			ReceiverID: post.AuthorID,
+			Approved:   false,
+			Banned:     false,
+			Deleted:    true,
+		}
+		if err = uh.userNotificationUcase.CreatePostNotification(&postNotification); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -1234,6 +1269,16 @@ func (uh *UserHandler) BanPost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		postNotification := models.PostNotification{
+			ReceiverID: input.AuthorID,
+			Approved:   false,
+			Banned:     true,
+			Deleted:    false,
+		}
+		if err = uh.userNotificationUcase.CreatePostNotification(&postNotification); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
