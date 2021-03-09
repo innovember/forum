@@ -102,8 +102,8 @@ func (uh *UserHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	mux.HandleFunc("/api/user/notifications/role/delete", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteRoleNotifications)))
 	mux.HandleFunc("/api/user/notifications/report", mw.SetHeaders(mw.AuthorizedOnly(uh.GetPostReportNotifications)))
 	mux.HandleFunc("/api/user/notifications/report/delete", mw.SetHeaders(mw.AuthorizedOnly(uh.DeletePostReportNotifications)))
-	// mux.HandleFunc("/api/user/notifications/post", mw.SetHeaders(mw.AuthorizedOnly(uh.GetPostNotifications)))
-	// mux.HandleFunc("/api/user/notifications/post/delete", mw.SetHeaders(mw.AuthorizedOnly(uh.DeletePostNotifications)))
+	mux.HandleFunc("/api/user/notifications/post", mw.SetHeaders(mw.AuthorizedOnly(uh.GetPostNotifications)))
+	mux.HandleFunc("/api/user/notifications/post/delete", mw.SetHeaders(mw.AuthorizedOnly(uh.DeletePostNotifications)))
 }
 
 func (uh *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -1277,18 +1277,18 @@ func (uh *UserHandler) GetRoleNotifications(w http.ResponseWriter, r *http.Reque
 func (uh *UserHandler) GetPostReportNotifications(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		var (
-			status            int
-			err               error
-			cookie            *http.Cookie
-			user              *models.User
-			postNotifications []models.PostReportNotification
+			status                  int
+			err                     error
+			cookie                  *http.Cookie
+			user                    *models.User
+			postReportNotifications []models.PostReportNotification
 		)
 		cookie, _ = r.Cookie(config.SessionCookieName)
 		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
 			response.Error(w, status, err)
 			return
 		}
-		postNotifications, err = uh.userNotificationUcase.GetPostReportNotifications(user.ID)
+		postReportNotifications, err = uh.userNotificationUcase.GetPostReportNotifications(user.ID)
 		if err != nil {
 			response.Error(w, http.StatusBadRequest, err)
 			return
@@ -1297,7 +1297,7 @@ func (uh *UserHandler) GetPostReportNotifications(w http.ResponseWriter, r *http
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
-		response.Success(w, "post notifications", http.StatusOK, postNotifications)
+		response.Success(w, "post report notifications", http.StatusOK, postReportNotifications)
 	} else {
 		http.Error(w, "Only GET method allowed, return to main page", 405)
 		return
@@ -1353,9 +1353,67 @@ func (uh *UserHandler) DeletePostReportNotifications(w http.ResponseWriter, r *h
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
+		response.Success(w, "post report notifications has been deleted", http.StatusOK, nil)
+	} else {
+		http.Error(w, "Only DELETE method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) DeletePostNotifications(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "DELETE" {
+		var (
+			status int
+			err    error
+			cookie *http.Cookie
+			user   *models.User
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		if err = uh.userNotificationUcase.DeleteAllPostNotifications(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
 		response.Success(w, "post notifications has been deleted", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
+		return
+	}
+}
+
+func (uh *UserHandler) GetPostNotifications(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		var (
+			status            int
+			err               error
+			cookie            *http.Cookie
+			user              *models.User
+			postNotifications []models.PostNotification
+		)
+		cookie, _ = r.Cookie(config.SessionCookieName)
+		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		postNotifications, err = uh.userNotificationUcase.GetPostNotifications(user.ID)
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, err)
+			return
+		}
+		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		response.Success(w, "post notifications", http.StatusOK, postNotifications)
+	} else {
+		http.Error(w, "Only GET method allowed, return to main page", 405)
 		return
 	}
 }
