@@ -44,9 +44,12 @@ type ModeratorRepository interface {
 
 type UserNotificationRepository interface {
 	CreateRoleNotification(roleNotification *models.RoleNotification) (err error)
-	CreatePostReportNotification(postNotification *models.PostReportNotification) (err error)
+	CreatePostReportNotification(postReportNotification *models.PostReportNotification) (err error)
 	DeleteAllRoleNotifications(userID int64) (err error)
 	DeleteAllPostReportNotifications(userID int64) (err error)
 	GetRoleNotifications(userID int64) (roleNotifications []models.RoleNotification, err error)
-	GetPostReportNotifications(userID int64) (postNotifications []models.PostReportNotification, err error)
+	GetPostReportNotifications(userID int64) (postReportNotifications []models.PostReportNotification, err error)
+	CreatePostNotification(postNotification *models.PostNotification) (err error)
+	DeleteAllPostNotifications(userID int64) (err error)
+	GetPostNotifications(userID int64) (postNotifications []models.PostNotification, err error)
 }

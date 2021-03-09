@@ -100,8 +100,10 @@ func (uh *UserHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 	// user notifications
 	mux.HandleFunc("/api/user/notifications/role", mw.SetHeaders(mw.AuthorizedOnly(uh.GetRoleNotifications)))
 	mux.HandleFunc("/api/user/notifications/role/delete", mw.SetHeaders(mw.AuthorizedOnly(uh.DeleteRoleNotifications)))
-	mux.HandleFunc("/api/user/notifications/post", mw.SetHeaders(mw.AuthorizedOnly(uh.GetPostNotifications)))
-	mux.HandleFunc("/api/user/notifications/post/delete", mw.SetHeaders(mw.AuthorizedOnly(uh.DeletePostNotifications)))
+	mux.HandleFunc("/api/user/notifications/report", mw.SetHeaders(mw.AuthorizedOnly(uh.GetPostReportNotifications)))
+	mux.HandleFunc("/api/user/notifications/report/delete", mw.SetHeaders(mw.AuthorizedOnly(uh.DeletePostReportNotifications)))
+	// mux.HandleFunc("/api/user/notifications/post", mw.SetHeaders(mw.AuthorizedOnly(uh.GetPostNotifications)))
+	// mux.HandleFunc("/api/user/notifications/post/delete", mw.SetHeaders(mw.AuthorizedOnly(uh.DeletePostNotifications)))
 }
 
 func (uh *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -1272,7 +1274,7 @@ func (uh *UserHandler) GetRoleNotifications(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func (uh *UserHandler) GetPostNotifications(w http.ResponseWriter, r *http.Request) {
+func (uh *UserHandler) GetPostReportNotifications(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		var (
 			status            int
@@ -1330,7 +1332,7 @@ func (uh *UserHandler) DeleteRoleNotifications(w http.ResponseWriter, r *http.Re
 	}
 }
 
-func (uh *UserHandler) DeletePostNotifications(w http.ResponseWriter, r *http.Request) {
+func (uh *UserHandler) DeletePostReportNotifications(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "DELETE" {
 		var (
 			status int

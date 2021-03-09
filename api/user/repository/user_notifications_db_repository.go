@@ -39,7 +39,7 @@ func (ur *UserNotificationDBRepository) CreateRoleNotification(roleNotification 
 	return nil
 }
 
-func (ur *UserNotificationDBRepository) CreatePostReportNotification(postNotification *models.PostReportNotification) (err error) {
+func (ur *UserNotificationDBRepository) CreatePostReportNotification(postReportNotification *models.PostReportNotification) (err error) {
 	var (
 		ctx context.Context
 		tx  *sql.Tx
@@ -51,8 +51,8 @@ func (ur *UserNotificationDBRepository) CreatePostReportNotification(postNotific
 	}
 	if _, err = tx.Exec(`INSERT INTO notifications_reports(receiver_id, approved,
 		deleted,created_at)
-	VALUES(?,?,?,?,?)`, postNotification.ReceiverID, postNotification.Approved,
-		postNotification.Deleted, now); err != nil {
+	VALUES(?,?,?,?)`, postReportNotification.ReceiverID, postReportNotification.Approved,
+		postReportNotification.Deleted, now); err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -60,7 +60,6 @@ func (ur *UserNotificationDBRepository) CreatePostReportNotification(postNotific
 		return err
 	}
 	return nil
-
 }
 
 func (ur *UserNotificationDBRepository) DeleteAllRoleNotifications(userID int64) (err error) {
@@ -138,7 +137,7 @@ func (ur *UserNotificationDBRepository) GetRoleNotifications(userID int64) (role
 	return roleNotifications, nil
 }
 
-func (ur *UserNotificationDBRepository) GetPostReportNotifications(userID int64) (postNotifications []models.PostReportNotification, err error) {
+func (ur *UserNotificationDBRepository) GetPostReportNotifications(userID int64) (postReportNotifications []models.PostReportNotification, err error) {
 	var (
 		ctx  context.Context
 		tx   *sql.Tx
@@ -159,6 +158,87 @@ func (ur *UserNotificationDBRepository) GetPostReportNotifications(userID int64)
 		var pn models.PostReportNotification
 		err = rows.Scan(&pn.ID, &pn.ReceiverID, &pn.Approved,
 			&pn.Deleted, &pn.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		postReportNotifications = append(postReportNotifications, pn)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return postReportNotifications, nil
+}
+
+func (ur *UserNotificationDBRepository) CreatePostNotification(postNotification *models.PostNotification) (err error) {
+	var (
+		ctx context.Context
+		tx  *sql.Tx
+		now = time.Now().Unix()
+	)
+	ctx = context.Background()
+	if tx, err = ur.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(`INSERT INTO notifications_posts(receiver_id, approved,
+		deleted,created_at)
+	VALUES(?,?,?,?,?)`,
+		postNotification.ReceiverID,
+		postNotification.Approved,
+		postNotification.Banned,
+		postNotification.Deleted,
+		now); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ur *UserNotificationDBRepository) DeleteAllPostNotifications(userID int64) (err error) {
+	var (
+		ctx context.Context
+		tx  *sql.Tx
+	)
+	ctx = context.Background()
+	if tx, err = ur.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(`DELETE FROM notifications_posts
+						 WHERE receiver_id = ?
+		`, userID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ur *UserNotificationDBRepository) GetPostNotifications(userID int64) (postNotifications []models.PostNotification, err error) {
+	var (
+		ctx  context.Context
+		tx   *sql.Tx
+		rows *sql.Rows
+	)
+	ctx = context.Background()
+	if tx, err = ur.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return nil, err
+	}
+	if rows, err = tx.Query(`SELECT *
+							 FROM notifications_posts
+							 WHERE receiver_id = ?`,
+		userID); err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var pn models.PostNotification
+		err = rows.Scan(&pn.ID, &pn.ReceiverID, &pn.Approved,
+			&pn.Banned, &pn.Deleted, &pn.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
