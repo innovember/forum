@@ -30,3 +30,12 @@ type PostReportNotification struct {
 	Deleted    bool  `json:"deleted"`
 	CreatedAt  int64 `json:"createdAt,omitempty"`
 }
+
+type PostNotification struct {
+	ID         int64 `json:"id"`
+	ReceiverID int64 `json:"receiver_id"`
+	Approved   bool  `json:"approved"`
+	Banned     bool  `json:"banned"`
+	Deleted    bool  `json:"deleted"`
+	CreatedAt  int64 `json:"createdAt,omitempty"`
+}

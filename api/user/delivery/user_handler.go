@@ -422,6 +422,7 @@ func (uh *UserHandler) DismissRoleRequest(w http.ResponseWriter, r *http.Request
 			cookie        *http.Cookie
 			user          *models.User
 			roleRequestID int
+			roleRequest   *models.RoleRequest
 		)
 		cookie, _ = r.Cookie(config.SessionCookieName)
 		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
@@ -445,6 +446,20 @@ func (uh *UserHandler) DismissRoleRequest(w http.ResponseWriter, r *http.Request
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
+		if roleRequest, err = uh.userUcase.GetRoleRequestByID(int64(roleRequestID)); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		roleNotification := models.RoleNotification{
+			ReceiverID: roleRequest.UserID,
+			Accepted:   false,
+			Declined:   true,
+			Demoted:    false,
+		}
+		if err = uh.userNotificationUcase.CreateRoleNotification(&roleNotification); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
 		response.Success(w, "role request has been removed", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
@@ -460,6 +475,7 @@ func (uh *UserHandler) AcceptRoleRequest(w http.ResponseWriter, r *http.Request)
 			cookie        *http.Cookie
 			user          *models.User
 			roleRequestID int
+			roleRequest   *models.RoleRequest
 		)
 		cookie, _ = r.Cookie(config.SessionCookieName)
 		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
@@ -480,6 +496,20 @@ func (uh *UserHandler) AcceptRoleRequest(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if roleRequest, err = uh.userUcase.GetRoleRequestByID(int64(roleRequestID)); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		roleNotification := models.RoleNotification{
+			ReceiverID: roleRequest.UserID,
+			Accepted:   true,
+			Declined:   false,
+			Demoted:    false,
+		}
+		if err = uh.userNotificationUcase.CreateRoleNotification(&roleNotification); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -926,6 +956,7 @@ func (uh *UserHandler) DismissPostReport(w http.ResponseWriter, r *http.Request)
 			cookie       *http.Cookie
 			user         *models.User
 			postReportID int
+			postReport   *models.PostReport
 		)
 		cookie, _ = r.Cookie(config.SessionCookieName)
 		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
@@ -949,6 +980,19 @@ func (uh *UserHandler) DismissPostReport(w http.ResponseWriter, r *http.Request)
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
+		if postReport, err = uh.moderatorUcase.GetPostReportByID(int64(postReportID)); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		postReportNotification := models.PostReportNotification{
+			ReceiverID: postReport.ModeratorID,
+			Approved:   false,
+			Deleted:    true,
+		}
+		if err = uh.userNotificationUcase.CreatePostReportNotification(&postReportNotification); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
 		response.Success(w, "post report has been removed", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only DELETE method allowed, return to main page", 405)
@@ -964,6 +1008,7 @@ func (uh *UserHandler) AcceptPostReport(w http.ResponseWriter, r *http.Request) 
 			cookie       *http.Cookie
 			user         *models.User
 			postReportID int
+			postReport   *models.PostReport
 		)
 		cookie, _ = r.Cookie(config.SessionCookieName)
 		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
@@ -984,6 +1029,19 @@ func (uh *UserHandler) AcceptPostReport(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if postReport, err = uh.moderatorUcase.GetPostReportByID(int64(postReportID)); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		postReportNotification := models.PostReportNotification{
+			ReceiverID: postReport.ModeratorID,
+			Approved:   true,
+			Deleted:    false,
+		}
+		if err = uh.userNotificationUcase.CreatePostReportNotification(&postReportNotification); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -1055,6 +1113,16 @@ func (uh *UserHandler) DemoteModerator(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		roleNotification := models.RoleNotification{
+			ReceiverID: int64(moderatorID),
+			Accepted:   false,
+			Declined:   false,
+			Demoted:    true,
+		}
+		if err = uh.userNotificationUcase.CreateRoleNotification(&roleNotification); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -1211,14 +1279,14 @@ func (uh *UserHandler) GetPostNotifications(w http.ResponseWriter, r *http.Reque
 			err               error
 			cookie            *http.Cookie
 			user              *models.User
-			postNotifications []models.PostNotification
+			postNotifications []models.PostReportNotification
 		)
 		cookie, _ = r.Cookie(config.SessionCookieName)
 		if user, status, err = uh.userUcase.ValidateSession(cookie.Value); err != nil {
 			response.Error(w, status, err)
 			return
 		}
-		postNotifications, err = uh.userNotificationUcase.GetPostNotifications(user.ID)
+		postNotifications, err = uh.userNotificationUcase.GetPostReportNotifications(user.ID)
 		if err != nil {
 			response.Error(w, http.StatusBadRequest, err)
 			return
@@ -1275,7 +1343,7 @@ func (uh *UserHandler) DeletePostNotifications(w http.ResponseWriter, r *http.Re
 			response.Error(w, status, err)
 			return
 		}
-		if err = uh.userNotificationUcase.DeleteAllPostNotifications(user.ID); err != nil {
+		if err = uh.userNotificationUcase.DeleteAllPostReportNotifications(user.ID); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
