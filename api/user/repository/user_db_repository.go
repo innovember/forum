@@ -276,3 +276,27 @@ func (ur *UserDBRepository) DeleteRoleRequest(userID int64) (err error) {
 	}
 	return nil
 }
+
+func (ur *UserDBRepository) GetRoleRequestByID(requestID int64) (*models.RoleRequest, error) {
+	var (
+		ctx context.Context
+		tx  *sql.Tx
+		r   models.RoleRequest
+		err error
+	)
+	ctx = context.Background()
+	if tx, err = ur.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return nil, err
+	}
+	if err = tx.QueryRow(`SELECT *
+						  FROM role_requests
+						  WHERE id = ?
+	`, requestID).Scan(&r.ID, &r.UserID, &r.CreatedAt, &r.Pending); err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return &r, nil
+}

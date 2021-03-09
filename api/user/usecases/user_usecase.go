@@ -98,3 +98,10 @@ func (uu *UserUsecase) DeleteRoleRequest(userID int64) (err error) {
 	}
 	return nil
 }
+
+func (uu *UserUsecase) GetRoleRequestByID(requestID int64) (roleRequest *models.RoleRequest, err error) {
+	if roleRequest, err = uu.userRepo.GetRoleRequestByID(requestID); err != nil {
+		return nil, err
+	}
+	return roleRequest, nil
+}

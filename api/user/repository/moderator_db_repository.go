@@ -184,3 +184,27 @@ func (mr *ModeratorDBRepository) BanPost(postID int64, bans []string) (err error
 	}
 	return nil
 }
+
+func (mr *ModeratorDBRepository) GetPostReportByID(postReportID int64) (*models.PostReport, error) {
+	var (
+		ctx context.Context
+		tx  *sql.Tx
+		pr  models.PostReport
+		err error
+	)
+	ctx = context.Background()
+	if tx, err = mr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return nil, err
+	}
+	if err = tx.QueryRow(`SELECT *
+						  FROM post_reports
+						  WHERE id = ?
+	`, postReportID).Scan(&pr.ID, &pr.ModeratorID, &pr.PostID, &pr.CreatedAt, &pr.Pending); err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return &pr, nil
+}

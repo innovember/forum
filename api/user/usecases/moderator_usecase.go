@@ -53,3 +53,10 @@ func (mu *ModeratorUsecase) BanPost(postID int64, bans []string) (err error) {
 	}
 	return nil
 }
+
+func (mu *ModeratorUsecase) GetPostReportByID(postReportID int64) (postReport *models.PostReport, err error) {
+	if postReport, err = mu.moderatorRepo.GetPostReportByID(postReportID); err != nil {
+		return nil, err
+	}
+	return postReport, nil
+}

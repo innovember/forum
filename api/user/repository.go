@@ -18,6 +18,7 @@ type UserRepository interface {
 	CreateRoleRequest(userID int64) (err error)
 	GetRoleRequestByUserID(userID int64) (request *models.RoleRequest, err error)
 	DeleteRoleRequest(userID int64) (err error)
+	GetRoleRequestByID(requestID int64) (roleRequest *models.RoleRequest, err error)
 }
 
 type AdminRepository interface {
@@ -38,6 +39,7 @@ type ModeratorRepository interface {
 	ApprovePost(postID int64) (err error)
 	GetAllUnapprovedPosts() (posts []models.Post, err error)
 	BanPost(postID int64, bans []string) (err error)
+	GetPostReportByID(postReportID int64) (postReport *models.PostReport, err error)
 }
 
 type UserNotificationRepository interface {
