@@ -1,6 +1,6 @@
 # Forum
 
-Forum written with Golang and React.
+This is a backend repository for [client repository](https://github.com/PeIIIaJIkuH/forum-react).
 
 ## Features
 

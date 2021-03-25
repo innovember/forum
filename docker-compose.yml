@@ -1,18 +1,29 @@
-version: "3"
+version: "3.8"
+
 services:
-  api:
-    container_name: api-container
+  forume-api:
+    container_name: api-prod
     restart: always
-    build: ./api
+    build:
+      context: ./go/api
+      dockerfile: Dockerfile
     volumes:
-      - ./api/db:/app/db
+      - ./go/api/db:/go/src/app/db
     ports:
-      - "9090:8081"
-  client:
-    container_name: client-container
+      - 8081:8081
+
+  forume-client:
+    container_name: client-prod
     restart: always
-    build: ./ui
+    build:
+      context: ./react
+      dockerfile: Dockerfile.prod
+    volumes:
+      - "./react:/app"
+      - "/app/node_modules"
     ports:
-      - "8080:8080"
+      - 3000:3000
+    environment:
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
-      - api
+      - forume-api
