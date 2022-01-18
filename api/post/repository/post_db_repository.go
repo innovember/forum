@@ -5,11 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/innovember/forum/api/models"
-	"github.com/innovember/forum/api/post"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/innovember/forum/api/models"
+	"github.com/innovember/forum/api/post"
 )
 
 type PostDBRepository struct {
@@ -178,19 +179,19 @@ func (pr *PostDBRepository) GetPostByID(userID int64, postID int64) (post *model
 func (pr *PostDBRepository) GetPostsByCategories(categories []string, userID int64) (posts []models.Post, status int, err error) {
 	var (
 		rows           *sql.Rows
-		categoriesList string = fmt.Sprintf("\"%s\"", strings.Join(categories, "\", \""))
-		rateRepo              = NewRateDBRepository(pr.dbConn)
-		commentRepo           = NewCommentDBRepository(pr.dbConn)
+		categoriesList = fmt.Sprintf("\"%s\"", strings.Join(categories, "\", \""))
+		rateRepo       = NewRateDBRepository(pr.dbConn)
+		commentRepo    = NewCommentDBRepository(pr.dbConn)
 	)
 	query := fmt.Sprintf(`
 		SELECT p.*
 		FROM posts_categories_bridge as pcb
 		INNER JOIN posts as p
 		ON p.id = pcb.post_id
-		WHERE p.is_approved = 1
 		INNER JOIN categories as c
 		ON c.id=pcb.category_id
 		WHERE c.name in (%s)
+		AND p.is_approved = 1
 		GROUP BY p.id
 		HAVING COUNT(DISTINCT c.id) = %d
 		ORDER BY p.created_at DESC`, categoriesList, len(categories))
@@ -494,11 +495,11 @@ func (pr *PostDBRepository) GetBannedPostsByCategories(categories []string) (pos
 		FROM posts_bans_bridge as pbb
 		INNER JOIN posts as p
 		ON p.id = pbb.post_id
-		WHERE p.is_approved = 0
-		AND p.is_banned = 1
 		INNER JOIN bans as b
 		ON b.id=pbb.ban_id
 		WHERE b.name in (%s)
+		AND p.is_approved = 0
+		AND p.is_banned = 1
 		GROUP BY p.id
 		HAVING COUNT(DISTINCT b.id) = %d
 		ORDER BY p.created_at DESC`, categoriesList, len(categories))
