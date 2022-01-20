@@ -4,13 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/innovember/forum/api/config"
-	"github.com/innovember/forum/api/middleware"
-	"github.com/innovember/forum/api/models"
-	"github.com/innovember/forum/api/post"
-	"github.com/innovember/forum/api/response"
-	"github.com/innovember/forum/api/user"
-	uuid "github.com/satori/go.uuid"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -19,6 +12,15 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	uuid "github.com/satori/go.uuid"
+
+	"github.com/innovember/forum/api/config"
+	"github.com/innovember/forum/api/middleware"
+	"github.com/innovember/forum/api/models"
+	"github.com/innovember/forum/api/post"
+	"github.com/innovember/forum/api/response"
+	"github.com/innovember/forum/api/user"
 )
 
 type PostHandler struct {
@@ -111,7 +113,7 @@ func (ph *PostHandler) CreatePostHandlerFunc(w http.ResponseWriter, r *http.Requ
 		EditedAt:   0,
 		IsImage:    input.IsImage,
 		ImagePath:  input.ImagePath,
-		IsApproved: false,
+		IsApproved: true,
 	}
 	if newPost, status, err = ph.postUcase.Create(&post, input.Categories); err != nil {
 		response.Error(w, status, err)
