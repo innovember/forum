@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+
 	"github.com/innovember/forum/api/models"
 	"github.com/innovember/forum/api/user"
 )
@@ -58,12 +59,14 @@ func (ar *AdminDBRepository) GetAllRoleRequests() (roleRequests []models.RoleReq
 		var r models.RoleRequest
 		err = rows.Scan(&r.ID, &r.UserID, &r.CreatedAt, &r.Pending)
 		if err != nil {
+			tx.Rollback()
 			return nil, err
 		}
 		roleRequests = append(roleRequests, r)
 	}
 	err = rows.Err()
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 	if err = tx.Commit(); err != nil {
@@ -114,12 +117,14 @@ func (ar *AdminDBRepository) GetAllPostReports() (postReports []models.PostRepor
 		var pr models.PostReport
 		err = rows.Scan(&pr.ID, &pr.ModeratorID, &pr.PostID, &pr.Pending)
 		if err != nil {
+			tx.Rollback()
 			return nil, err
 		}
 		postReports = append(postReports, pr)
 	}
 	err = rows.Err()
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 	if err = tx.Commit(); err != nil {
@@ -202,15 +207,17 @@ func (ar *AdminDBRepository) GetAllModerators() (moderators []models.User, err e
 			&u.CreatedAt, &u.LastActive,
 			&u.Role)
 		if err != nil {
+			tx.Rollback()
 			return nil, err
 		}
 		moderators = append(moderators, u)
 	}
 	err = rows.Err()
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
-	return moderators, nil
+	return moderators, tx.Commit()
 }
 
 func (ar *AdminDBRepository) DemoteModerator(moderatorID int64) (err error) {
