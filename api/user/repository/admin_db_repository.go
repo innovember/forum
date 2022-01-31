@@ -112,8 +112,10 @@ func (ar *AdminDBRepository) GetAllPostReports() (postReports []models.PostRepor
 	if tx, err = ar.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
 		return nil, err
 	}
-	if rows, err = tx.Query(`SELECT *
-							 FROM role_requests
+	if rows, err = tx.Query(`SELECT r.*, p.title
+							 FROM post_reports AS r
+							 JOIN posts AS p
+							 ON p.id = r.post_id
 		`); err != nil {
 		tx.Rollback()
 		return nil, err
@@ -121,7 +123,9 @@ func (ar *AdminDBRepository) GetAllPostReports() (postReports []models.PostRepor
 	defer rows.Close()
 	for rows.Next() {
 		var pr models.PostReport
-		err = rows.Scan(&pr.ID, &pr.ModeratorID, &pr.PostID, &pr.Pending)
+		err = rows.Scan(&pr.ID, &pr.ModeratorID,
+			&pr.PostID, &pr.Pending,
+			&pr.PostTitle)
 		if err != nil {
 			tx.Rollback()
 			return nil, err
