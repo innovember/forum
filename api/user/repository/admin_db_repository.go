@@ -40,9 +40,10 @@ func (ar *AdminDBRepository) UpgradeRole(userID int64) (err error) {
 
 func (ar *AdminDBRepository) GetAllRoleRequests() (roleRequests []models.RoleRequest, err error) {
 	var (
-		ctx  context.Context
-		tx   *sql.Tx
-		rows *sql.Rows
+		ctx      context.Context
+		tx       *sql.Tx
+		rows     *sql.Rows
+		userRepo = NewUserDBRepository(ar.dbConn)
 	)
 	ctx = context.Background()
 	if tx, err = ar.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
@@ -58,6 +59,11 @@ func (ar *AdminDBRepository) GetAllRoleRequests() (roleRequests []models.RoleReq
 	for rows.Next() {
 		var r models.RoleRequest
 		err = rows.Scan(&r.ID, &r.UserID, &r.CreatedAt, &r.Pending)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		r.User, err = userRepo.GetUserByID(r.UserID)
 		if err != nil {
 			tx.Rollback()
 			return nil, err

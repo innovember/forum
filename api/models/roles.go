@@ -5,4 +5,5 @@ type RoleRequest struct {
 	UserID    int64 `json:"userID"`
 	CreatedAt int64 `json:"createdAt,omitempty"`
 	Pending   bool  `json:"pending"`
+	User      *User `json:"user"`
 }
