@@ -3,10 +3,11 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"time"
+
 	"github.com/innovember/forum/api/models"
 	postRepo "github.com/innovember/forum/api/post/repository"
 	"github.com/innovember/forum/api/user"
-	"time"
 )
 
 type ModeratorDBRepository struct {
@@ -85,12 +86,14 @@ func (mr *ModeratorDBRepository) GetMyReports(moderatorID int64) (postReports []
 		var pr models.PostReport
 		err = rows.Scan(&pr.ID, &pr.ModeratorID, &pr.PostID, &pr.CreatedAt, &pr.Pending)
 		if err != nil {
+			tx.Rollback()
 			return nil, err
 		}
 		postReports = append(postReports, pr)
 	}
 	err = rows.Err()
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 	if err = tx.Commit(); err != nil {
@@ -145,12 +148,14 @@ func (mr *ModeratorDBRepository) GetAllUnapprovedPosts() (posts []models.Post, e
 			&p.CreatedAt, &p.EditedAt, &p.IsImage,
 			&p.ImagePath, &p.IsApproved)
 		if err != nil {
+			tx.Rollback()
 			return nil, err
 		}
 		posts = append(posts, p)
 	}
 	err = rows.Err()
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 	if err = tx.Commit(); err != nil {
