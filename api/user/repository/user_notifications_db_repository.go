@@ -3,9 +3,10 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"time"
+
 	"github.com/innovember/forum/api/models"
 	"github.com/innovember/forum/api/user"
-	"time"
 )
 
 type UserNotificationDBRepository struct {
@@ -118,6 +119,7 @@ func (ur *UserNotificationDBRepository) GetRoleNotifications(userID int64) (role
 							 FROM notifications_roles
 							 WHERE receiver_id = ?`,
 		userID); err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 	defer rows.Close()
@@ -126,15 +128,17 @@ func (ur *UserNotificationDBRepository) GetRoleNotifications(userID int64) (role
 		err = rows.Scan(&rn.ID, &rn.ReceiverID, &rn.Accepted,
 			&rn.Declined, &rn.Demoted, &rn.CreatedAt)
 		if err != nil {
+			tx.Rollback()
 			return nil, err
 		}
 		roleNotifications = append(roleNotifications, rn)
 	}
 	err = rows.Err()
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
-	return roleNotifications, nil
+	return roleNotifications, tx.Commit()
 }
 
 func (ur *UserNotificationDBRepository) GetPostReportNotifications(userID int64) (postReportNotifications []models.PostReportNotification, err error) {
@@ -151,6 +155,7 @@ func (ur *UserNotificationDBRepository) GetPostReportNotifications(userID int64)
 							 FROM notifications_reports
 							 WHERE receiver_id = ?`,
 		userID); err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 	defer rows.Close()
@@ -159,15 +164,17 @@ func (ur *UserNotificationDBRepository) GetPostReportNotifications(userID int64)
 		err = rows.Scan(&pn.ID, &pn.ReceiverID, &pn.Approved,
 			&pn.Deleted, &pn.CreatedAt)
 		if err != nil {
+			tx.Rollback()
 			return nil, err
 		}
 		postReportNotifications = append(postReportNotifications, pn)
 	}
 	err = rows.Err()
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
-	return postReportNotifications, nil
+	return postReportNotifications, tx.Commit()
 }
 
 func (ur *UserNotificationDBRepository) CreatePostNotification(postNotification *models.PostNotification) (err error) {
@@ -232,6 +239,7 @@ func (ur *UserNotificationDBRepository) GetPostNotifications(userID int64) (post
 							 FROM notifications_posts
 							 WHERE receiver_id = ?`,
 		userID); err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 	defer rows.Close()
@@ -240,6 +248,7 @@ func (ur *UserNotificationDBRepository) GetPostNotifications(userID int64) (post
 		err = rows.Scan(&pn.ID, &pn.ReceiverID, &pn.Approved,
 			&pn.Banned, &pn.Deleted, &pn.CreatedAt)
 		if err != nil {
+			tx.Rollback()
 			return nil, err
 		}
 		postNotifications = append(postNotifications, pn)
@@ -248,5 +257,5 @@ func (ur *UserNotificationDBRepository) GetPostNotifications(userID int64) (post
 	if err != nil {
 		return nil, err
 	}
-	return postNotifications, nil
+	return postNotifications, tx.Commit()
 }
