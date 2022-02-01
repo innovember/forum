@@ -3,9 +3,10 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"net/http"
+
 	"github.com/innovember/forum/api/models"
 	"github.com/innovember/forum/api/post"
-	"net/http"
 )
 
 type CategoryDBRepository struct {
@@ -147,7 +148,7 @@ func (cr *CategoryDBRepository) DeleteCategoryByID(categoryID int64) (err error)
 	}
 	if _, err = tx.Exec(`DELETE FROM categories
 						 WHERE id = ?
- 						)`, categoryID); err != nil {
+ 						`, categoryID); err != nil {
 		tx.Rollback()
 		return err
 	}
