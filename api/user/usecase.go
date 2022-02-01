@@ -21,9 +21,9 @@ type UserUsecase interface {
 }
 
 type AdminUsecase interface {
-	UpgradeRole(userID int64) (err error)
+	UpgradeRole(requestID int64) (err error)
 	GetAllRoleRequests() (roleRequests []models.RoleRequest, err error)
-	DeleteRoleRequest(userID int64) (err error)
+	DeleteRoleRequest(requestID int64) (err error)
 	GetAllPostReports() (postReports []models.PostReport, err error)
 	AcceptPostReport(postReportID int64) (err error)
 	DismissPostReport(postReportID int64) (err error)
