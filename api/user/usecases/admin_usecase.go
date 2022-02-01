@@ -13,8 +13,8 @@ func NewAdminUsecase(repo user.AdminRepository) user.AdminUsecase {
 	return &AdminUsecase{adminRepo: repo}
 }
 
-func (au *AdminUsecase) UpgradeRole(userID int64) (err error) {
-	if err = au.adminRepo.UpgradeRole(userID); err != nil {
+func (au *AdminUsecase) UpgradeRole(requestID int64) (err error) {
+	if err = au.adminRepo.UpgradeRole(requestID); err != nil {
 		return err
 	}
 	return nil
@@ -27,8 +27,8 @@ func (au *AdminUsecase) GetAllRoleRequests() (roleRequests []models.RoleRequest,
 	return roleRequests, nil
 }
 
-func (au *AdminUsecase) DeleteRoleRequest(userID int64) (err error) {
-	if err = au.adminRepo.DeleteRoleRequest(userID); err != nil {
+func (au *AdminUsecase) DeleteRoleRequest(requestID int64) (err error) {
+	if err = au.adminRepo.DeleteRoleRequest(requestID); err != nil {
 		return err
 	}
 	return nil

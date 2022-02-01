@@ -16,13 +16,21 @@ func NewAdminDBRepository(conn *sql.DB) user.AdminRepository {
 	return &AdminDBRepository{dbConn: conn}
 }
 
-func (ar *AdminDBRepository) UpgradeRole(userID int64) (err error) {
+func (ar *AdminDBRepository) UpgradeRole(requestID int64) (err error) {
 	var (
-		ctx context.Context
-		tx  *sql.Tx
+		ctx    context.Context
+		tx     *sql.Tx
+		userID int64
 	)
 	ctx = context.Background()
 	if tx, err = ar.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return err
+	}
+	if err = tx.QueryRow(`SELECT user_id
+						 FROM role_requests
+						 WHERE id = ?
+		`, requestID).Scan(&userID); err != nil {
+		tx.Rollback()
 		return err
 	}
 	if _, err = tx.Exec(`UPDATE users
@@ -81,7 +89,7 @@ func (ar *AdminDBRepository) GetAllRoleRequests() (roleRequests []models.RoleReq
 	return roleRequests, nil
 }
 
-func (ar *AdminDBRepository) DeleteRoleRequest(userID int64) (err error) {
+func (ar *AdminDBRepository) DeleteRoleRequest(requestID int64) (err error) {
 	var (
 		ctx context.Context
 		tx  *sql.Tx
@@ -91,8 +99,8 @@ func (ar *AdminDBRepository) DeleteRoleRequest(userID int64) (err error) {
 		return err
 	}
 	if _, err = tx.Exec(`DELETE FROM role_requests
-						 WHERE user_id = ?
-		`, userID); err != nil {
+						 WHERE id = ?
+		`, requestID); err != nil {
 		tx.Rollback()
 		return err
 	}
