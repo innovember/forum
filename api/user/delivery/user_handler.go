@@ -146,6 +146,19 @@ func (uh *UserHandler) CreateUserHandlerFunc(w http.ResponseWriter, r *http.Requ
 		response.Error(w, http.StatusBadRequest, err)
 		return
 	}
+	if input.RegisterAsModerator {
+		var registeredUser *models.User
+		registeredUser, status, err = uh.userUcase.FindUserByUsername(user.Username)
+		if err != nil {
+			response.Error(w, status, err)
+			return
+		}
+		err = uh.userUcase.CreateRoleRequest(registeredUser.ID)
+		if err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+	}
 	response.Success(w, "new user has been created", status, user)
 	return
 }
