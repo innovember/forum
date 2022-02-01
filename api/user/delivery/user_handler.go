@@ -370,7 +370,7 @@ func (uh *UserHandler) GetRoleRequest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if roleRequest, err = uh.userUcase.GetRoleRequestByUserID(user.ID); err != nil {
-			response.Error(w, http.StatusInternalServerError, err)
+			response.Error(w, http.StatusBadRequest, err)
 			return
 		}
 		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
