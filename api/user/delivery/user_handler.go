@@ -122,7 +122,7 @@ func (uh *UserHandler) CreateUserHandlerFunc(w http.ResponseWriter, r *http.Requ
 		hashedPassword string
 		status         int
 		err            error
-		adminAuthToken string = os.Getenv("ADMIN_AUTH_TOKEN")
+		adminAuthToken = os.Getenv("ADMIN_AUTH_TOKEN")
 	)
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
@@ -284,7 +284,7 @@ func (uh *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 		)
 		_id := r.URL.Path[len("/api/user/"):]
 		if userID, err = strconv.Atoi(_id); err != nil {
-			response.Error(w, http.StatusBadRequest, errors.New("user id doesn't exist"))
+			response.Error(w, http.StatusBadRequest, errors.New("invalid user ID"))
 			return
 		}
 		user, err = uh.userUcase.GetUserByID(int64(userID))
@@ -438,7 +438,7 @@ func (uh *UserHandler) DismissRoleRequest(w http.ResponseWriter, r *http.Request
 		}
 		_id := r.URL.Path[len("/api/admin/request/dismiss/"):]
 		if roleRequestID, err = strconv.Atoi(_id); err != nil {
-			response.Error(w, http.StatusBadRequest, errors.New("request id doesn't exist"))
+			response.Error(w, http.StatusBadRequest, errors.New("invalid requestID"))
 			return
 		}
 		if err = uh.adminUcase.DeleteRoleRequest(int64(roleRequestID)); err != nil {
@@ -491,7 +491,7 @@ func (uh *UserHandler) AcceptRoleRequest(w http.ResponseWriter, r *http.Request)
 		}
 		_id := r.URL.Path[len("/api/admin/request/accept/"):]
 		if roleRequestID, err = strconv.Atoi(_id); err != nil {
-			response.Error(w, http.StatusBadRequest, errors.New("request id doesn't exist"))
+			response.Error(w, http.StatusBadRequest, errors.New("invalid requestID"))
 			return
 		}
 		if err = uh.adminUcase.UpgradeRole(int64(roleRequestID)); err != nil {
@@ -1128,7 +1128,7 @@ func (uh *UserHandler) DemoteModerator(w http.ResponseWriter, r *http.Request) {
 		}
 		_id := r.URL.Path[len("/api/admin/demote/moderator/"):]
 		if moderatorID, err = strconv.Atoi(_id); err != nil {
-			response.Error(w, http.StatusBadRequest, errors.New("post report id doesn't exist"))
+			response.Error(w, http.StatusBadRequest, errors.New("invalid userID"))
 			return
 		}
 		if err = uh.adminUcase.DemoteModerator(int64(moderatorID)); err != nil {
