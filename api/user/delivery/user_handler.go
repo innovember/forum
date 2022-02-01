@@ -516,6 +516,10 @@ func (uh *UserHandler) AcceptRoleRequest(w http.ResponseWriter, r *http.Request)
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
+		if err = uh.adminUcase.DeleteRoleRequest(roleRequest.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
 		response.Success(w, "role request has been accepted", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only PUT method allowed, return to main page", 405)
