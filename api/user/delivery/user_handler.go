@@ -454,10 +454,6 @@ func (uh *UserHandler) DismissRoleRequest(w http.ResponseWriter, r *http.Request
 			response.Error(w, http.StatusBadRequest, errors.New("invalid requestID"))
 			return
 		}
-		if err = uh.adminUcase.DeleteRoleRequest(int64(roleRequestID)); err != nil {
-			response.Error(w, http.StatusInternalServerError, err)
-			return
-		}
 		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
@@ -473,6 +469,10 @@ func (uh *UserHandler) DismissRoleRequest(w http.ResponseWriter, r *http.Request
 			Demoted:    false,
 		}
 		if err = uh.userNotificationUcase.CreateRoleNotification(&roleNotification); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.adminUcase.DeleteRoleRequest(int64(roleRequestID)); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
