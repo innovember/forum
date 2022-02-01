@@ -188,7 +188,7 @@ func (ur *UserNotificationDBRepository) CreatePostNotification(postNotification 
 		return err
 	}
 	if _, err = tx.Exec(`INSERT INTO notifications_posts(receiver_id, approved,
-		deleted,created_at)
+		banned, deleted, created_at)
 	VALUES(?,?,?,?,?)`,
 		postNotification.ReceiverID,
 		postNotification.Approved,
