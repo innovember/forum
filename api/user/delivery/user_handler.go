@@ -3,6 +3,11 @@ package delivery
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
+	"os"
+	"strconv"
+	"time"
+
 	"github.com/innovember/forum/api/config"
 	"github.com/innovember/forum/api/middleware"
 	"github.com/innovember/forum/api/models"
@@ -10,10 +15,6 @@ import (
 	"github.com/innovember/forum/api/response"
 	"github.com/innovember/forum/api/security"
 	"github.com/innovember/forum/api/user"
-	"net/http"
-	"os"
-	"strconv"
-	"time"
 )
 
 type UserHandler struct {
@@ -1041,7 +1042,7 @@ func (uh *UserHandler) AcceptPostReport(w http.ResponseWriter, r *http.Request) 
 			response.Error(w, http.StatusForbidden, errors.New("not enough privileges,only admin users allowed"))
 			return
 		}
-		_id := r.URL.Path[len("/api/admin/request/accept/"):]
+		_id := r.URL.Path[len("/api/admin/post/report/accept/"):]
 		if postReportID, err = strconv.Atoi(_id); err != nil {
 			response.Error(w, http.StatusBadRequest, errors.New("request id doesn't exist"))
 			return
