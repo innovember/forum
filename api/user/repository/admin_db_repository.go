@@ -40,6 +40,12 @@ func (ar *AdminDBRepository) UpgradeRole(requestID int64) (err error) {
 		tx.Rollback()
 		return err
 	}
+	if _, err = tx.Exec(`DELETE FROM role_requests
+						 WHERE id = ?
+		`, requestID); err != nil {
+		tx.Rollback()
+		return err
+	}
 	if err = tx.Commit(); err != nil {
 		return err
 	}
