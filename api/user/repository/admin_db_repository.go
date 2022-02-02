@@ -132,8 +132,8 @@ func (ar *AdminDBRepository) GetAllPostReports() (postReports []models.PostRepor
 	for rows.Next() {
 		var pr models.PostReport
 		err = rows.Scan(&pr.ID, &pr.ModeratorID,
-			&pr.PostID, &pr.Pending,
-			&pr.PostTitle)
+			&pr.PostID, &pr.CreatedAt,
+			&pr.Pending, &pr.PostTitle)
 		if err != nil {
 			tx.Rollback()
 			return nil, err
