@@ -67,7 +67,7 @@ func (ph *PostHandler) Configure(mux *http.ServeMux, mw *middleware.MiddlewareMa
 
 	// Notifications
 	mux.HandleFunc("/api/notifications", mw.SetHeaders(mw.AuthorizedOnly(ph.GetAllNotificationsHandler)))
-	mux.HandleFunc("/api/notifications/delete/", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteNotificationsHandler)))
+	mux.HandleFunc("/api/notifications/delete", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteNotificationsHandler)))
 	// Images
 	mux.HandleFunc("/api/image/upload", mw.SetHeaders(mw.AuthorizedOnly(ph.UploadImageHandler)))
 	mux.HandleFunc("/api/image/delete/", mw.SetHeaders(mw.AuthorizedOnly(ph.DeleteImageHandler)))
