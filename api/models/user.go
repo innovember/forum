@@ -7,6 +7,6 @@ type User struct {
 	Email      string `json:"email"`
 	CreatedAt  int64  `json:"createdAt,omitempty"`
 	LastActive int64  `json:"lastActive,omitempty"`
-	SessionID  string `json:"sessionID,omitempty"`
+	SessionID  string `json:"sessionId,omitempty"`
 	Role       int    `json:"role"`
 }

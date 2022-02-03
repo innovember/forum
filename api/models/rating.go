@@ -7,17 +7,17 @@ type Rating struct {
 
 type PostRating struct {
 	ID     int   `json:"id"`
-	UserID int64 `json:"userID"`
-	PostID int64 `json:"postID"`
+	UserID int64 `json:"userId"`
+	PostID int64 `json:"postId"`
 	Rate   int   `json:"rate"`
 	Author *User `json:"author"`
 }
 
 type CommentRating struct {
 	ID        int   `json:"id"`
-	UserID    int64 `json:"userID"`
-	CommentID int64 `json:"commentID"`
+	UserID    int64 `json:"userId"`
+	CommentID int64 `json:"commentId"`
 	Rate      int   `json:"rate"`
-	PostID    int64 `json:"postID"`
+	PostID    int64 `json:"postId"`
 	Author    *User `json:"author"`
 }
