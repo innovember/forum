@@ -250,3 +250,22 @@ func (ar *AdminDBRepository) DemoteModerator(moderatorID int64) (err error) {
 	}
 	return nil
 }
+
+func (ar *AdminDBRepository) DeletePostReportByPostID(postID int64) error {
+	var (
+		ctx context.Context
+		tx  *sql.Tx
+		err error
+	)
+	ctx = context.Background()
+	if tx, err = ar.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(`DELETE FROM post_reports
+						 WHERE post_id = ?
+		`, postID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}

@@ -589,6 +589,10 @@ func (uh *UserHandler) DeletePostByAdmin(w http.ResponseWriter, r *http.Request)
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
+		if err = uh.adminUcase.DeletePostReportByPostID(post.ID); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
 		if status, err = uh.postUcase.Delete(post.ID); err != nil {
 			response.Error(w, status, err)
 			return
