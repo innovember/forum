@@ -1012,10 +1012,6 @@ func (uh *UserHandler) DismissPostReport(w http.ResponseWriter, r *http.Request)
 			response.Error(w, http.StatusBadRequest, errors.New("post report id doesn't exist"))
 			return
 		}
-		if err = uh.adminUcase.DismissPostReport(int64(postReportID)); err != nil {
-			response.Error(w, http.StatusInternalServerError, err)
-			return
-		}
 		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
@@ -1030,6 +1026,10 @@ func (uh *UserHandler) DismissPostReport(w http.ResponseWriter, r *http.Request)
 			Deleted:    true,
 		}
 		if err = uh.userNotificationUcase.CreatePostReportNotification(&postReportNotification); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		if err = uh.adminUcase.DismissPostReport(int64(postReportID)); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
