@@ -1085,6 +1085,10 @@ func (uh *UserHandler) AcceptPostReport(w http.ResponseWriter, r *http.Request) 
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
+		if err = uh.moderatorUcase.DeletePostReport(int64(postReportID)); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
 		response.Success(w, "post report has been accepted", http.StatusOK, nil)
 	} else {
 		http.Error(w, "Only PUT method allowed, return to main page", 405)

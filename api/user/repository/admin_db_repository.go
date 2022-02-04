@@ -170,16 +170,7 @@ func (ar *AdminDBRepository) AcceptPostReport(postReportID int64) (err error) {
 		tx.Rollback()
 		return err
 	}
-	if _, err = tx.Exec(`DELETE FROM post_reports
-						 WHERE id = ?
-		`, postReportID); err != nil {
-		tx.Rollback()
-		return err
-	}
-	if err = tx.Commit(); err != nil {
-		return err
-	}
-	return nil
+	return tx.Commit()
 }
 
 func (ar *AdminDBRepository) DismissPostReport(postReportID int64) (err error) {
