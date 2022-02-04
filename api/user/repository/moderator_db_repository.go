@@ -74,8 +74,10 @@ func (mr *ModeratorDBRepository) GetMyReports(moderatorID int64) (postReports []
 	if tx, err = mr.dbConn.BeginTx(ctx, &sql.TxOptions{}); err != nil {
 		return nil, err
 	}
-	if rows, err = tx.Query(`SELECT *
-							 FROM post_reports
+	if rows, err = tx.Query(`SELECT r.*, p.title
+							 FROM post_reports AS r
+							 JOIN posts AS p
+							 ON p.id = r.post_id
 							 WHERE moderator_id = ?
 		`, moderatorID); err != nil {
 		tx.Rollback()
@@ -84,7 +86,9 @@ func (mr *ModeratorDBRepository) GetMyReports(moderatorID int64) (postReports []
 	defer rows.Close()
 	for rows.Next() {
 		var pr models.PostReport
-		err = rows.Scan(&pr.ID, &pr.ModeratorID, &pr.PostID, &pr.CreatedAt, &pr.Pending)
+		err = rows.Scan(&pr.ID, &pr.ModeratorID,
+			&pr.PostID, &pr.CreatedAt,
+			&pr.Pending, &pr.PostTitle)
 		if err != nil {
 			tx.Rollback()
 			return nil, err
@@ -96,10 +100,7 @@ func (mr *ModeratorDBRepository) GetMyReports(moderatorID int64) (postReports []
 		tx.Rollback()
 		return nil, err
 	}
-	if err = tx.Commit(); err != nil {
-		return nil, err
-	}
-	return postReports, nil
+	return postReports, tx.Commit()
 }
 
 func (mr *ModeratorDBRepository) ApprovePost(postID int64) (err error) {
