@@ -16,6 +16,7 @@ type PostUsecase interface {
 	Update(post *models.Post) (editedPost *models.Post, status int, err error)
 	Delete(postID int64) (status int, err error)
 	GetBannedPostsByCategories(categories []string) (posts []models.Post, status int, err error)
+	DeletePostReportByPostID(postID int64) (err error)
 }
 
 type CategoryUsecase interface {

@@ -87,3 +87,10 @@ func (pu *PostUsecase) GetBannedPostsByCategories(categories []string) (posts []
 	}
 	return posts, status, err
 }
+
+func (pu *PostUsecase) DeletePostReportByPostID(postID int64) (err error) {
+	if err = pu.postRepo.DeletePostReportByPostID(postID); err != nil {
+		return err
+	}
+	return nil
+}

@@ -30,6 +30,7 @@ type AdminRepository interface {
 	DismissPostReport(postReportID int64) (err error)
 	GetAllModerators() (moderators []models.User, err error)
 	DemoteModerator(moderatorID int64) (err error)
+	DeletePostReportByPostID(postID int64) error
 }
 
 type ModeratorRepository interface {

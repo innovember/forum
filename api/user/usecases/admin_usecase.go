@@ -68,3 +68,10 @@ func (au *AdminUsecase) DemoteModerator(moderatorID int64) (err error) {
 	}
 	return nil
 }
+
+func (au *AdminUsecase) DeletePostReportByPostID(postID int64) (err error) {
+	if err = au.adminRepo.DeletePostReportByPostID(postID); err != nil {
+		return err
+	}
+	return nil
+}
