@@ -1065,18 +1065,26 @@ func (uh *UserHandler) AcceptPostReport(w http.ResponseWriter, r *http.Request) 
 		}
 		_id := r.URL.Path[len("/api/admin/post/report/accept/"):]
 		if postReportID, err = strconv.Atoi(_id); err != nil {
-			response.Error(w, http.StatusBadRequest, errors.New("request id doesn't exist"))
+			response.Error(w, http.StatusBadRequest, errors.New("invalid request id"))
 			return
 		}
+
+		if postReport, err = uh.moderatorUcase.GetPostReportByID(int64(postReportID)); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+
+		post, status, err := uh.postUcase.GetPostByID(user.ID, postReport.PostID)
+		if err != nil {
+			response.Error(w, status, err)
+			return
+		}
+
 		if err = uh.adminUcase.AcceptPostReport(int64(postReportID)); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
 		if err = uh.userUcase.UpdateActivity(user.ID); err != nil {
-			response.Error(w, http.StatusInternalServerError, err)
-			return
-		}
-		if postReport, err = uh.moderatorUcase.GetPostReportByID(int64(postReportID)); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -1090,6 +1098,16 @@ func (uh *UserHandler) AcceptPostReport(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		if err = uh.moderatorUcase.DeletePostReport(int64(postReportID)); err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+			return
+		}
+		postNotification := models.PostNotification{
+			ReceiverID: post.AuthorID,
+			Approved:   false,
+			Banned:     false,
+			Deleted:    true,
+		}
+		if err = uh.userNotificationUcase.CreatePostNotification(&postNotification); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -1252,9 +1270,9 @@ func (uh *UserHandler) ApprovePost(w http.ResponseWriter, r *http.Request) {
 		}
 		postNotification := models.PostNotification{
 			ReceiverID: post.AuthorID,
-			Approved:   false,
+			Approved:   true,
 			Banned:     false,
-			Deleted:    true,
+			Deleted:    false,
 		}
 		if err = uh.userNotificationUcase.CreatePostNotification(&postNotification); err != nil {
 			response.Error(w, http.StatusInternalServerError, err)
